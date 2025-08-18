@@ -8,5 +8,11 @@
     <string name="camera_view">Camera View</string>
     <string name="toggle_camera">Toggle Camera</string>
     <string name="take_photo">Take Photo</string>
+    <string name="logout">Logout</string>
+    <string name="about_app">About App</string>
+    <string name="privacy_settings">Privacy Settings</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="user_example_com">user@example.com</string>
+    <string name="account">Account</string>
 
 </resources>
