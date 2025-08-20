@@ -1,0 +1,23 @@
+0 Agaricus Campestris
+1 Agaricus Subrufescens
+2 Auricularia Auricula Judae
+3 Auricularia Polytricha
+4 Calvatia Cyathiformis
+5 Chlorophyllum Molybdites
+6 Coprinellus Micaceus
+7 Coprinopsis Atramentaria
+8 Ganoderma Applanatum
+9 Ganoderma Lucidum
+10 Lentinus Sajor Caju
+11 Lentinus Tigrinus
+12 Lepiota Cristata
+13 Macrolepiota Procera
+14 Microporus Xanthopus
+15 Mycena Galericulata
+16 Mycena Pura
+17 Pleurotus Cystidiosus
+18 Pleurotus Ostreatus
+19 Psathyrella Candolleana
+20 Schizophyllum Commune
+21 Termitomyces Clypeatus
+22 Volvariella Volvacea

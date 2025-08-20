@@ -2,6 +2,8 @@ package com.example.myapplication;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,6 +27,8 @@ import androidx.lifecycle.LifecycleOwner;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -43,9 +47,9 @@ public class FavoritesFragment extends Fragment {
     private ImageCapture imageCapture;
     private CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
 
-    public FavoritesFragment() {
-        // Required empty public constructor
-    }
+    private TFLiteHelper tfliteHelper;
+
+    public FavoritesFragment() { }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -56,6 +60,8 @@ public class FavoritesFragment extends Fragment {
         btnToggleCamera = view.findViewById(R.id.btnToggleCamera);
         btnTakePhoto = view.findViewById(R.id.btnTakePhoto);
 
+        tfliteHelper = new TFLiteHelper(getContext()); // initialize TFLite
+
         // Check permissions
         if (allPermissionsGranted()) {
             startCamera();
@@ -63,7 +69,6 @@ public class FavoritesFragment extends Fragment {
             ActivityCompat.requestPermissions(getActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
         }
 
-        // Set up button listeners
         btnToggleCamera.setOnClickListener(v -> toggleCamera());
         btnTakePhoto.setOnClickListener(v -> takePhoto());
 
@@ -84,48 +89,32 @@ public class FavoritesFragment extends Fragment {
 
     private void bindPreview(ProcessCameraProvider cameraProvider) {
         Preview preview = new Preview.Builder().build();
-
         imageCapture = new ImageCapture.Builder().build();
-
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
         try {
-            // Unbind use cases before rebinding
             cameraProvider.unbindAll();
-
-            // Bind use cases to camera
             cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageCapture);
-
         } catch (Exception e) {
             Log.e(TAG, "Use case binding failed", e);
         }
     }
 
     private void toggleCamera() {
-        // Toggle between front and back camera
-        if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
-            cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
-        } else {
-            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-        }
-
-        // Restart camera with new selector
+        cameraSelector = (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
+                ? CameraSelector.DEFAULT_FRONT_CAMERA
+                : CameraSelector.DEFAULT_BACK_CAMERA;
         startCamera();
     }
 
     private void takePhoto() {
-        if (imageCapture == null) {
-            return;
-        }
+        if (imageCapture == null) return;
 
-        // Create time-stamped output file to hold the image
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
         File photoFile = new File(getContext().getExternalFilesDir(null), "IMG_" + timeStamp + ".jpg");
 
-        // Create output options object which contains file + metadata
         ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(photoFile).build();
 
-        // Set up image capture listener, which is triggered after photo has been taken
         imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(getContext()),
                 new ImageCapture.OnImageSavedCallback() {
                     @Override
@@ -136,11 +125,28 @@ public class FavoritesFragment extends Fragment {
 
                     @Override
                     public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
-                        String msg = "Photo capture succeeded: " + output.getSavedUri();
                         Toast.makeText(getContext(), "Photo saved!", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, msg);
+                        Log.d(TAG, "Photo path: " + photoFile.getAbsolutePath());
+
+                        // Run TFLite classification
+                        classifyPhoto(photoFile);
                     }
                 });
+    }
+
+    private void classifyPhoto(File photoFile) {
+        try {
+            FileInputStream fis = new FileInputStream(photoFile);
+            Bitmap bitmap = BitmapFactory.decodeStream(fis);
+            fis.close();
+
+            String result = tfliteHelper.classify(bitmap);
+            Toast.makeText(getContext(), "Prediction: " + result, Toast.LENGTH_LONG).show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), "Failed to load photo for classification", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private boolean allPermissionsGranted() {
@@ -153,7 +159,8 @@ public class FavoritesFragment extends Fragment {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
@@ -168,9 +175,8 @@ public class FavoritesFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         if (cameraProviderFuture != null) {
-            ProcessCameraProvider cameraProvider;
             try {
-                cameraProvider = cameraProviderFuture.get();
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
                 cameraProvider.unbindAll();
             } catch (ExecutionException | InterruptedException e) {
                 Log.e(TAG, "Error shutting down camera", e);

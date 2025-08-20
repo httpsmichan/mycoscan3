@@ -30,6 +30,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    packaging {
+        resources {
+            pickFirsts += "META-INF/*"
+        }
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
 }
 
 dependencies {
@@ -54,10 +62,14 @@ dependencies {
     implementation(libs.camera.view)
     implementation(libs.camera.extensions)
 
-    implementation(platform(libs.firebase.bom))   // Import Firebase BoM
-    implementation(libs.firebase.analytics)      // Analytics
-    implementation(libs.firebase.auth)           // (Optional) Authentication
-    implementation(libs.firebase.firestore)      // (Optional) Firestore
-    implementation(libs.firebase.storage)        // (Optional) Storage
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
 
+    implementation(libs.tflite)
+    implementation(libs.tflite.support)
+    implementation(libs.tflite.gpu)
+    implementation(libs.tflite.metadata)
 }
