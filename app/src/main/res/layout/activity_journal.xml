@@ -9,18 +9,14 @@
         android:id="@+id/etNote"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Write a note"/>
-
-    <Button
-        android:id="@+id/btnAddNote"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Add Note"
-        android:layout_marginTop="8dp"/>
+        android:hint="Write a note..."
+        android:focusable="false"
+        android:clickable="true"
+        android:inputType="none"/>
 
     <ListView
         android:id="@+id/listViewNotes"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"/>
+        android:layout_height="match_parent"
+        android:dividerHeight="8dp"/>
 </LinearLayout>

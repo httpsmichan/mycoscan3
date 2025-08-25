@@ -34,7 +34,7 @@ public class TabbedActivity extends AppCompatActivity {
             } else if (itemId == R.id.nav_favorites) {
                 selectedFragment = new FavoritesFragment();
             } else if (itemId == R.id.nav_profile) {
-                selectedFragment = new ProfileFragment();
+                selectedFragment = new UploadFragment();
             } else if (itemId == R.id.nav_settings) {
                 selectedFragment = new SettingsFragment();
             }

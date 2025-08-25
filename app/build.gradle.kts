@@ -72,4 +72,12 @@ dependencies {
     implementation(libs.tflite.support)
     implementation(libs.tflite.gpu)
     implementation(libs.tflite.metadata)
+
+    implementation(libs.play.services.location)
+    implementation(libs.play.services.maps)
+
+    implementation(libs.cloudinary.android) {
+        exclude(group = "com.cloudinary", module = "cloudinary-android-preprocess")
+        exclude(group = "com.linkedin.android.litr", module = "litr")
+    }
 }

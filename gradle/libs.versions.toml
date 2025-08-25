@@ -14,6 +14,7 @@ firebase-bom = "34.1.0"
 tflite = "2.15.0"
 tflite-support = "0.4.3"
 tflite-metadata = "0.4.3"
+cloudinary = "1.30.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -46,6 +47,11 @@ tflite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tf
 tflite-support = { group = "org.tensorflow", name = "tensorflow-lite-support", version.ref = "tflite-support" }
 tflite-gpu = { group = "org.tensorflow", name = "tensorflow-lite-gpu", version.ref = "tflite" }
 tflite-metadata = { group = "org.tensorflow", name = "tensorflow-lite-metadata", version.ref = "tflite-metadata" }
+
+play-services-location = { module = "com.google.android.gms:play-services-location", version = "21.3.0" }
+play-services-maps = { module = "com.google.android.gms:play-services-maps", version = "18.1.0" }
+
+cloudinary-android = { group = "com.cloudinary", name = "cloudinary-android", version.ref = "cloudinary" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
