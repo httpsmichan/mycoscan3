@@ -37,6 +37,13 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.api.IMapController;
+
 public class UploadFragment extends Fragment {
 
     private EditText etMushroomType, etDescription;
@@ -52,6 +59,7 @@ public class UploadFragment extends Fragment {
     private TextView tvLatitude, tvLongitude;
     private double latitude = 0.0;
     private double longitude = 0.0;
+    private MapView mapPreview;
 
     // Image picker launcher
     private final ActivityResultLauncher<Intent> pickImageLauncher =
@@ -74,7 +82,7 @@ public class UploadFragment extends Fragment {
         etMushroomType = root.findViewById(R.id.etMushroomType);
         etDescription = root.findViewById(R.id.etDescription);
         spinnerCategory = root.findViewById(R.id.spinnerCategory);
-        btnPickImage = root.findViewById(R.id.btnPickMedia); // same ID in layout
+        btnPickImage = root.findViewById(R.id.btnPickMedia);
         btnGetLocation = root.findViewById(R.id.btnGetLocation);
         btnSubmit = root.findViewById(R.id.btnSubmit);
         imagePreview = root.findViewById(R.id.imagePreview);
@@ -104,6 +112,12 @@ public class UploadFragment extends Fragment {
             }
         });
 
+        // Map preview setup
+        mapPreview = root.findViewById(R.id.mapPreview);
+        Configuration.getInstance().setUserAgentValue(requireContext().getPackageName());
+        mapPreview.setTileSource(TileSourceFactory.MAPNIK);
+        mapPreview.setMultiTouchControls(true);
+
         // Submit post
         btnSubmit.setOnClickListener(v -> {
             String mushroomType = etMushroomType.getText().toString().trim();
@@ -130,40 +144,43 @@ public class UploadFragment extends Fragment {
                         public void onSuccess(String requestId, Map resultData) {
                             String cloudinaryUrl = resultData.get("secure_url").toString();
 
-                            Map<String, Object> post = new HashMap<>();
-                            post.put("mushroomType", mushroomType);
-                            post.put("category", category);
-                            post.put("description", description);
-                            post.put("latitude", latitude);
-                            post.put("longitude", longitude);
-                            post.put("imageUrl", cloudinaryUrl);
-                            post.put("timestamp", System.currentTimeMillis());
-                            post.put("userId", getCurrentUserId());
+                            // Fetch username first, then save post
+                            getCurrentUsername(username -> {
+                                Map<String, Object> post = new HashMap<>();
+                                post.put("mushroomType", mushroomType);
+                                post.put("category", category);
+                                post.put("description", description);
+                                post.put("latitude", latitude);
+                                post.put("longitude", longitude);
+                                post.put("imageUrl", cloudinaryUrl);
+                                post.put("timestamp", System.currentTimeMillis());
+                                post.put("userId", getCurrentUserId());
+                                post.put("username", username); // ✅ save username
 
-                            FirebaseFirestore.getInstance()
-                                    .collection("posts")
-                                    .add(post)
-                                    .addOnSuccessListener(documentReference -> {
-                                        Toast.makeText(requireContext(), "Post saved!", Toast.LENGTH_SHORT).show();
+                                FirebaseFirestore.getInstance()
+                                        .collection("posts")
+                                        .add(post)
+                                        .addOnSuccessListener(documentReference -> {
+                                            Toast.makeText(requireContext(), "Post saved!", Toast.LENGTH_SHORT).show();
 
-                                        // Clear fields
-                                        etMushroomType.setText("");
-                                        etDescription.setText("");
-                                        spinnerCategory.setSelection(0); // reset to first item
-                                        imagePreview.setImageURI(null);
-                                        imagePreview.setVisibility(View.GONE);
-                                        imageUri = null;
+                                            // Reset fields
+                                            etMushroomType.setText("");
+                                            etDescription.setText("");
+                                            spinnerCategory.setSelection(0);
+                                            imagePreview.setImageURI(null);
+                                            imagePreview.setVisibility(View.GONE);
+                                            imageUri = null;
 
-                                        // Reset location
-                                        tvLatitude.setText("Latitude: ");
-                                        tvLongitude.setText("Longitude: ");
-                                        latitude = 0.0;
-                                        longitude = 0.0;
-                                        userLocation = "Unknown";
-                                    })
-                                    .addOnFailureListener(e ->
-                                            Toast.makeText(requireContext(), "Error saving post: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                                    );
+                                            tvLatitude.setText("Latitude: ");
+                                            tvLongitude.setText("Longitude: ");
+                                            latitude = 0.0;
+                                            longitude = 0.0;
+                                            userLocation = "Unknown";
+                                        })
+                                        .addOnFailureListener(e ->
+                                                Toast.makeText(requireContext(), "Error saving post: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                                        );
+                            });
                         }
 
                         @Override
@@ -206,6 +223,19 @@ public class UploadFragment extends Fragment {
                 tvLatitude.setText("Latitude: " + latitude);
                 tvLongitude.setText("Longitude: " + longitude);
 
+                mapPreview.setVisibility(View.VISIBLE);
+                IMapController mapController = mapPreview.getController();
+                mapController.setZoom(15.0);
+                GeoPoint point = new GeoPoint(latitude, longitude);
+                mapController.setCenter(point);
+
+                mapPreview.getOverlays().clear();
+                Marker marker = new Marker(mapPreview);
+                marker.setPosition(point);
+                marker.setTitle("Exact Location");
+                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                mapPreview.getOverlays().add(marker);
+
                 Toast.makeText(requireContext(), "Location captured!", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(requireContext(), "Unable to fetch location", Toast.LENGTH_SHORT).show();
@@ -217,5 +247,49 @@ public class UploadFragment extends Fragment {
     private String getCurrentUserId() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         return user != null ? user.getUid() : "anonymous";
+    }
+
+    // Fetch username from Firestore users collection
+    private void getCurrentUsername(OnUsernameFetchedListener listener) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            String uid = user.getUid();
+            FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(uid)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            String username = documentSnapshot.getString("username");
+                            listener.onUsernameFetched(username != null ? username : "anonymous");
+                        } else {
+                            listener.onUsernameFetched("anonymous");
+                        }
+                    })
+                    .addOnFailureListener(e -> listener.onUsernameFetched("anonymous"));
+        } else {
+            listener.onUsernameFetched("anonymous");
+        }
+    }
+
+    // Simple callback for async username fetch
+    interface OnUsernameFetchedListener {
+        void onUsernameFetched(String username);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mapPreview != null) {
+            mapPreview.onResume();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mapPreview != null) {
+            mapPreview.onPause();
+        }
     }
 }

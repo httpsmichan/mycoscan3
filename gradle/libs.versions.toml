@@ -15,6 +15,9 @@ tflite = "2.15.0"
 tflite-support = "0.4.3"
 tflite-metadata = "0.4.3"
 cloudinary = "1.30.0"
+osmdroid = "6.1.15"
+glide = "4.16.0"
+firebaseDatabase = "22.0.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -53,6 +56,11 @@ play-services-maps = { module = "com.google.android.gms:play-services-maps", ver
 
 cloudinary-android = { group = "com.cloudinary", name = "cloudinary-android", version.ref = "cloudinary" }
 
+osmdroid = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroid" }
+
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+glide-compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
+firebase-database = { group = "com.google.firebase", name = "firebase-database", version.ref = "firebaseDatabase" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-

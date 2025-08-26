@@ -56,38 +56,45 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Location Picker -->
-        <Button
-            android:id="@+id/btnGetLocation"
+        <!-- 📍 Location Container -->
+        <LinearLayout
+            android:id="@+id/locationContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Get Current Location"
+            android:orientation="vertical"
             android:layout_marginTop="12dp"
             app:layout_constraintTop_toBottomOf="@id/imagePreview"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Latitude -->
-        <TextView
-            android:id="@+id/tvLatitude"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Latitude: Unknown"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/btnGetLocation"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            <Button
+                android:id="@+id/btnGetLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Get Current Location" />
 
-        <!-- Longitude -->
-        <TextView
-            android:id="@+id/tvLongitude"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Longitude: Unknown"
-            android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@id/tvLatitude"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            <org.osmdroid.views.MapView
+                android:id="@+id/mapPreview"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvLatitude"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Latitude: Unknown"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/tvLongitude"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Longitude: Unknown"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
 
         <!-- Description -->
         <EditText
@@ -99,7 +106,7 @@
             android:inputType="textMultiLine"
             android:padding="12dp"
             android:layout_marginTop="12dp"
-            app:layout_constraintTop_toBottomOf="@id/tvLongitude"
+            app:layout_constraintTop_toBottomOf="@id/locationContainer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
@@ -116,3 +123,4 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
+

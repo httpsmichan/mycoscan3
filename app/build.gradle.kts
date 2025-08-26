@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation(libs.firebase.database)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -75,6 +76,11 @@ dependencies {
 
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
+
+    implementation(libs.osmdroid)
+
+    implementation(libs.glide)
+    annotationProcessor(libs.glide.compiler)
 
     implementation(libs.cloudinary.android) {
         exclude(group = "com.cloudinary", module = "cloudinary-android-preprocess")

@@ -11,14 +11,24 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SettingsFragment extends Fragment {
 
     private TextView textUserEmail;
     private Button btnEditProfile, btnSecurity, btnJournal, btnLogout;
+    private RecyclerView recyclerUserPosts;
+    private PostAdapter postAdapter;
+    private List<Post> postList;
 
     @Nullable
     @Override
@@ -30,11 +40,18 @@ public class SettingsFragment extends Fragment {
         btnSecurity = view.findViewById(R.id.btnSecurity);
         btnJournal = view.findViewById(R.id.btnJournal);
         btnLogout = view.findViewById(R.id.btnLogout);
+        recyclerUserPosts = view.findViewById(R.id.recyclerUserPosts);
+
+        recyclerUserPosts.setLayoutManager(new LinearLayoutManager(getContext()));
+        postList = new ArrayList<>();
+        postAdapter = new PostAdapter(getContext(), postList);
+        recyclerUserPosts.setAdapter(postAdapter);
 
         // Show current signed-in email
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
             textUserEmail.setText("Hi! " + user.getEmail());
+            loadUserPosts(user.getUid());
         } else {
             textUserEmail.setText("No user signed in");
         }
@@ -47,13 +64,26 @@ public class SettingsFragment extends Fragment {
         // Logout
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
-            // After logout, go back to login screen
             Intent intent = new Intent(getActivity(), LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
-            getActivity().finish(); // close current activity
+            getActivity().finish();
         });
 
         return view;
+    }
+
+    private void loadUserPosts(String userId) {
+        FirebaseFirestore.getInstance().collection("posts")
+                .whereEqualTo("userId", userId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    postList.clear();
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        Post post = doc.toObject(Post.class);
+                        postList.add(post);
+                    }
+                    postAdapter.notifyDataSetChanged();
+                });
     }
 }
