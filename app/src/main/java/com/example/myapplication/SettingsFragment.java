@@ -17,9 +17,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SettingsFragment extends Fragment {
@@ -29,6 +31,8 @@ public class SettingsFragment extends Fragment {
     private RecyclerView recyclerUserPosts;
     private PostAdapter postAdapter;
     private List<Post> postList;
+
+    private FirebaseFirestore db;
 
     @Nullable
     @Override
@@ -47,7 +51,9 @@ public class SettingsFragment extends Fragment {
         postAdapter = new PostAdapter(getContext(), postList);
         recyclerUserPosts.setAdapter(postAdapter);
 
-        // Show current signed-in email
+        db = FirebaseFirestore.getInstance();
+
+        // Show current signed-in email and load posts
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
             textUserEmail.setText("Hi! " + user.getEmail());
@@ -83,6 +89,10 @@ public class SettingsFragment extends Fragment {
                         Post post = doc.toObject(Post.class);
                         postList.add(post);
                     }
+
+                    // Sort locally by timestamp descending
+                    Collections.sort(postList, (p1, p2) -> Long.compare(p2.getTimestamp(), p1.getTimestamp()));
+
                     postAdapter.notifyDataSetChanged();
                 });
     }

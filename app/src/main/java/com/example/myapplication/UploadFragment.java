@@ -3,6 +3,8 @@ package com.example.myapplication;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -35,6 +37,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.osmdroid.config.Configuration;
@@ -144,19 +147,35 @@ public class UploadFragment extends Fragment {
                         public void onSuccess(String requestId, Map resultData) {
                             String cloudinaryUrl = resultData.get("secure_url").toString();
 
-                            // Fetch username first, then save post
+                            // Fetch username first
                             getCurrentUsername(username -> {
+                                // Convert latitude/longitude to address
+                                final String[] addressHolder = { "Unknown location" };
+                                try {
+                                    Geocoder geocoder = new Geocoder(requireContext());
+                                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                                    if (addresses != null && !addresses.isEmpty()) {
+                                        addressHolder[0] = addresses.get(0).getAddressLine(0);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
+                                // Prepare post data
                                 Map<String, Object> post = new HashMap<>();
                                 post.put("mushroomType", mushroomType);
                                 post.put("category", category);
                                 post.put("description", description);
                                 post.put("latitude", latitude);
                                 post.put("longitude", longitude);
+                                post.put("location", addressHolder[0]);          // ✅ address as text
                                 post.put("imageUrl", cloudinaryUrl);
-                                post.put("timestamp", System.currentTimeMillis());
+                                post.put("timestamp", System.currentTimeMillis()); // ✅ time/date posted
                                 post.put("userId", getCurrentUserId());
-                                post.put("username", username); // ✅ save username
+                                post.put("username", username);
+                                post.put("verified", "not verified");           // ✅ default not verified
 
+                                // Save to Firestore
                                 FirebaseFirestore.getInstance()
                                         .collection("posts")
                                         .add(post)
@@ -176,6 +195,8 @@ public class UploadFragment extends Fragment {
                                             latitude = 0.0;
                                             longitude = 0.0;
                                             userLocation = "Unknown";
+
+                                            mapPreview.getOverlays().clear();
                                         })
                                         .addOnFailureListener(e ->
                                                 Toast.makeText(requireContext(), "Error saving post: " + e.getMessage(), Toast.LENGTH_SHORT).show()

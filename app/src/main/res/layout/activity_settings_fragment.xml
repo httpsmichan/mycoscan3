@@ -1,64 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="24dp">
 
-    <LinearLayout
+    <!-- Top part: greeting + buttons inside a ScrollView -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
-        <!-- Greeting -->
-        <TextView
-            android:id="@+id/textUserEmail"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hi!"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="20dp"
-            android:layout_marginStart="16dp"/>
-
-        <!-- Edit Profile Button -->
-        <Button
-            android:id="@+id/btnEditProfile"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Edit Profile"
-            android:layout_marginTop="40dp"/>
+            android:orientation="vertical">
 
-        <!-- Security Button -->
-        <Button
-            android:id="@+id/btnSecurity"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Security (Change Password)"
-            android:layout_marginTop="16dp"/>
+            <!-- Greeting -->
+            <TextView
+                android:id="@+id/textUserEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hi!"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp"
+                android:layout_marginStart="16dp"/>
 
-        <!-- Journal Button -->
-        <Button
-            android:id="@+id/btnJournal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="My Journal (Notes)"
-            android:layout_marginTop="16dp"/>
+            <!-- Edit Profile Button -->
+            <Button
+                android:id="@+id/btnEditProfile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Edit Profile"
+                android:layout_marginTop="40dp"/>
 
-        <!-- Logout Button -->
-        <Button
-            android:id="@+id/btnLogout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Logout"
-            android:layout_marginTop="16dp"/>
+            <!-- Security Button -->
+            <Button
+                android:id="@+id/btnSecurity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Security (Change Password)"
+                android:layout_marginTop="16dp"/>
 
-        <!-- RecyclerView for user posts -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerUserPosts"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
-            android:padding="8dp" />
+            <!-- Journal Button -->
+            <Button
+                android:id="@+id/btnJournal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="My Journal (Notes)"
+                android:layout_marginTop="16dp"/>
 
-    </LinearLayout>
-</ScrollView>
+            <!-- Logout Button -->
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Logout"
+                android:layout_marginTop="16dp"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- RecyclerView for user posts -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerUserPosts"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp" />
+
+</LinearLayout>
