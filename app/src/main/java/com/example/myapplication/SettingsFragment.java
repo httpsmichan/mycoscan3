@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +18,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
@@ -87,13 +87,21 @@ public class SettingsFragment extends Fragment {
                     postList.clear();
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
                         Post post = doc.toObject(Post.class);
+                        post.setPostId(doc.getId());
                         postList.add(post);
+
+                        // Debug logging
+                        Log.d("SettingsFragment", "Loaded user post with ID: " + doc.getId());
                     }
 
                     // Sort locally by timestamp descending
                     Collections.sort(postList, (p1, p2) -> Long.compare(p2.getTimestamp(), p1.getTimestamp()));
 
                     postAdapter.notifyDataSetChanged();
+                    Log.d("SettingsFragment", "Loaded " + postList.size() + " user posts");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("SettingsFragment", "Error loading user posts", e);
                 });
     }
 }

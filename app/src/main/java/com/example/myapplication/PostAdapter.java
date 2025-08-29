@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,7 +75,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             holder.tvTimeStamp.setText("Unknown time");
         }
 
-
         // Verified status
         String verified = post.getVerified() != null ? post.getVerified() : "Not Verified";
         holder.tvVerifiedStatus.setText(verified);
@@ -84,7 +84,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         } else {
             holder.tvVerifiedStatus.setTextColor(holder.itemView.getResources().getColor(android.R.color.holo_red_dark));
         }
-
 
         // Mushroom type & description
         holder.tvMushroomType.setText(post.getMushroomType() != null ? post.getMushroomType() : "Unknown type");
@@ -102,7 +101,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
         // Click → PostDetailActivity
         holder.itemView.setOnClickListener(v -> {
+            // ✅ ADD LOGGING TO DEBUG
+            Log.d("PostAdapter", "Clicking post with ID: " + post.getPostId());
+
             Intent intent = new Intent(v.getContext(), PostDetailActivity.class);
+            intent.putExtra("postId", post.getPostId()); // ← ADD THIS LINE!
             intent.putExtra("imageUrl", post.getImageUrl());
             intent.putExtra("mushroomType", post.getMushroomType());
             intent.putExtra("description", post.getDescription());
@@ -110,6 +113,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             intent.putExtra("latitude", post.getLatitude());
             intent.putExtra("longitude", post.getLongitude());
             intent.putExtra("verified", post.getVerified());
+
+            // ✅ ADD LOGGING TO VERIFY DATA
+            Log.d("PostAdapter", "Passing postId: " + post.getPostId());
+
             v.getContext().startActivity(intent);
         });
     }

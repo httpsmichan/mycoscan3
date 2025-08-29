@@ -20,10 +20,10 @@ public class MainActivity extends AppCompatActivity {
         btnGetStarted.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Open LoginActivity when "Get Started" is clicked
+
                 Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(intent);
-                finish(); // Close splash screen
+                finish();
             }
         });
     }

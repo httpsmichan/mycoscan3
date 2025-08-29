@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 public class Post {
+    private String postId;
     private String mushroomType;
     private String description;
     private String imageUrl;
@@ -9,10 +10,10 @@ public class Post {
     private double latitude;
     private double longitude;
     private long timestamp;
-    private String verified; // default: "Not Verified"
-    private String location; // optional
+    private String verified;
+    private String location;
 
-    public Post() {} // Firestore requires empty constructor
+    public Post() {}
 
     public Post(String mushroomType, String description, String imageUrl,
                 String userId, String username, double latitude, double longitude,
@@ -30,6 +31,7 @@ public class Post {
     }
 
     // Getters
+    public String getPostId() { return postId; }
     public String getMushroomType() { return mushroomType; }
     public String getDescription() { return description; }
     public String getImageUrl() { return imageUrl; }
@@ -40,4 +42,17 @@ public class Post {
     public long getTimestamp() { return timestamp; }
     public String getVerified() { return verified; }
     public String getLocation() { return location; }
+
+    // Setters (needed for Firestore and setting document ID)
+    public void setPostId(String postId) { this.postId = postId; }
+    public void setMushroomType(String mushroomType) { this.mushroomType = mushroomType; }
+    public void setDescription(String description) { this.description = description; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public void setUsername(String username) { this.username = username; }
+    public void setLatitude(double latitude) { this.latitude = latitude; }
+    public void setLongitude(double longitude) { this.longitude = longitude; }
+    public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+    public void setVerified(String verified) { this.verified = verified; }
+    public void setLocation(String location) { this.location = location; }
 }

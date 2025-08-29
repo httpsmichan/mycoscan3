@@ -54,10 +54,10 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly
+
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            // User is already logged in, go to main activity
+
             navigateToMainActivity();
         }
     }
@@ -71,10 +71,9 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Disable login button to prevent multiple clicks
+
         btnLogin.setEnabled(false);
 
-        // Sign in with Firebase Auth
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override

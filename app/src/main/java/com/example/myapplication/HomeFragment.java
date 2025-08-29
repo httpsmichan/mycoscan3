@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,9 +55,17 @@ public class HomeFragment extends Fragment {
                     postList.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         Post post = doc.toObject(Post.class);
+                        post.setPostId(doc.getId()); // ✅ SET THE POST ID HERE!
                         postList.add(post);
+
+                        // Debug logging
+                        Log.d("HomeFragment", "Loaded post with ID: " + doc.getId());
                     }
                     adapter.notifyDataSetChanged();
+                    Log.d("HomeFragment", "Loaded " + postList.size() + " posts");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("HomeFragment", "Error loading posts", e);
                 });
     }
 }

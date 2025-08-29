@@ -18,7 +18,6 @@ public class MapActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Important: configure osmdroid before setContentView
         Configuration.getInstance().setUserAgentValue(getPackageName());
 
         setContentView(R.layout.activity_map);

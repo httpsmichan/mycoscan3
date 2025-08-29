@@ -168,18 +168,21 @@ public class UploadFragment extends Fragment {
                                 post.put("description", description);
                                 post.put("latitude", latitude);
                                 post.put("longitude", longitude);
-                                post.put("location", addressHolder[0]);          // ✅ address as text
+                                post.put("location", addressHolder[0]);
                                 post.put("imageUrl", cloudinaryUrl);
-                                post.put("timestamp", System.currentTimeMillis()); // ✅ time/date posted
+                                post.put("timestamp", System.currentTimeMillis());
                                 post.put("userId", getCurrentUserId());
                                 post.put("username", username);
-                                post.put("verified", "not verified");           // ✅ default not verified
+                                post.put("verified", "not verified");
 
                                 // Save to Firestore
                                 FirebaseFirestore.getInstance()
                                         .collection("posts")
                                         .add(post)
                                         .addOnSuccessListener(documentReference -> {
+                                            String postId = documentReference.getId();
+                                            documentReference.update("postId", postId);
+
                                             Toast.makeText(requireContext(), "Post saved!", Toast.LENGTH_SHORT).show();
 
                                             // Reset fields
@@ -201,6 +204,7 @@ public class UploadFragment extends Fragment {
                                         .addOnFailureListener(e ->
                                                 Toast.makeText(requireContext(), "Error saving post: " + e.getMessage(), Toast.LENGTH_SHORT).show()
                                         );
+
                             });
                         }
 

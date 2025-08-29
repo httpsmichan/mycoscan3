@@ -30,7 +30,7 @@ public class TabbedActivity extends AppCompatActivity {
             if (itemId == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
             } else if (itemId == R.id.nav_search) {
-                selectedFragment = new SearchFragment();
+                selectedFragment = new MapFragment();
             } else if (itemId == R.id.nav_favorites) {
                 selectedFragment = new FavoritesFragment();
             } else if (itemId == R.id.nav_profile) {
