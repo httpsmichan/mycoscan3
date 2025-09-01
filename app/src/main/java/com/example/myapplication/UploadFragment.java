@@ -127,10 +127,13 @@ public class UploadFragment extends Fragment {
             String category = spinnerCategory.getSelectedItem().toString();
             String description = etDescription.getText().toString().trim();
 
-            if (mushroomType.isEmpty() || description.isEmpty() || imageUri == null || userLocation.equals("Unknown")) {
-                Toast.makeText(requireContext(), "Please fill all fields and attach an image.", Toast.LENGTH_SHORT).show();
+            if (!DavaoGeoFence.isInsideDavao(latitude, longitude)) {
+                Toast.makeText(requireContext(), "You're outside Davao City. Posting is only allowed inside Davao City.", Toast.LENGTH_LONG).show();
                 return;
             }
+
+
+
 
             MediaManager.get().upload(imageUri)
                     .unsigned("mycoscan")
