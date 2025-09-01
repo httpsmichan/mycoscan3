@@ -1,10 +1,12 @@
 package com.example.myapplication;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -15,16 +17,25 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Random;
 
 public class HomeFragment extends Fragment {
 
     private RecyclerView recyclerPosts;
     private PostAdapter adapter;
     private final List<Post> postList = new ArrayList<>();
-
     private FirebaseFirestore db;
+
+    private TextView tipTextView;
 
     public HomeFragment() {}
 
@@ -37,12 +48,19 @@ public class HomeFragment extends Fragment {
         recyclerPosts.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerPosts.setHasFixedSize(true);
 
-        // ✅ use your existing PostAdapter (not inner class)
         adapter = new PostAdapter(requireContext(), postList);
         recyclerPosts.setAdapter(adapter);
 
+        tipTextView = view.findViewById(R.id.tipTextView);
+
         db = FirebaseFirestore.getInstance();
-        loadAllPosts(); // one-time fetch
+        loadAllPosts();
+
+        List<String> tips = loadTipsFromJson();
+        if (!tips.isEmpty()) {
+            String dailyTip = getDailyTip(tips);
+            tipTextView.setText(dailyTip);
+        }
 
         return view;
     }
@@ -55,10 +73,9 @@ public class HomeFragment extends Fragment {
                     postList.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         Post post = doc.toObject(Post.class);
-                        post.setPostId(doc.getId()); // ✅ SET THE POST ID HERE!
+                        post.setPostId(doc.getId());
                         postList.add(post);
 
-                        // Debug logging
                         Log.d("HomeFragment", "Loaded post with ID: " + doc.getId());
                     }
                     adapter.notifyDataSetChanged();
@@ -67,5 +84,52 @@ public class HomeFragment extends Fragment {
                 .addOnFailureListener(e -> {
                     Log.e("HomeFragment", "Error loading posts", e);
                 });
+    }
+
+    private List<String> loadTipsFromJson() {
+        List<String> tips = new ArrayList<>();
+        try {
+            InputStream is = requireContext().getAssets().open("tips.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+
+            String json = new String(buffer, StandardCharsets.UTF_8);
+
+            // Parse root object
+            JSONObject jsonObject = new JSONObject(json);
+            JSONArray jsonArray = jsonObject.getJSONArray("tips");
+
+            // Loop through tips array
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject tipObject = jsonArray.getJSONObject(i);
+                tips.add(tipObject.getString("tip"));
+            }
+        } catch (IOException | org.json.JSONException e) {
+            Log.e("HomeFragment", "Error loading tips", e);
+        }
+        return tips;
+    }
+
+    private String getDailyTip(List<String> tips) {
+        SharedPreferences prefs = requireContext().getSharedPreferences("DailyTipPrefs", requireContext().MODE_PRIVATE);
+
+        int today = Calendar.getInstance().get(Calendar.DAY_OF_YEAR);
+        int lastDay = prefs.getInt("last_day", -1);
+
+        if (today != lastDay) {
+            Random random = new Random();
+            String newTip = tips.get(random.nextInt(tips.size()));
+
+            prefs.edit()
+                    .putInt("last_day", today)
+                    .putString("tip_of_day", newTip)
+                    .apply();
+
+            return newTip;
+        } else {
+            return prefs.getString("tip_of_day", "Stay curious about mushrooms!");
+        }
     }
 }
