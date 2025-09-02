@@ -1,10 +1,15 @@
 package com.example.myapplication;
 
 import android.Manifest;
+import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +18,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.camera.core.AspectRatio;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
@@ -89,7 +95,11 @@ public class FavoritesFragment extends Fragment {
 
     private void bindPreview(ProcessCameraProvider cameraProvider) {
         Preview preview = new Preview.Builder().build();
-        imageCapture = new ImageCapture.Builder().build();
+        imageCapture = new ImageCapture.Builder()
+                .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .build();
+
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
         try {
@@ -111,9 +121,19 @@ public class FavoritesFragment extends Fragment {
         if (imageCapture == null) return;
 
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        File photoFile = new File(getContext().getExternalFilesDir(null), "IMG_" + timeStamp + ".jpg");
+        String fileName = "IMG_" + timeStamp + ".jpg";
 
-        ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(photoFile).build();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/MushroomApp");
+
+        ImageCapture.OutputFileOptions outputOptions =
+                new ImageCapture.OutputFileOptions.Builder(
+                        requireContext().getContentResolver(),
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        contentValues
+                ).build();
 
         imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(getContext()),
                 new ImageCapture.OnImageSavedCallback() {
@@ -125,11 +145,23 @@ public class FavoritesFragment extends Fragment {
 
                     @Override
                     public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
-                        Toast.makeText(getContext(), "Photo saved!", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "Photo path: " + photoFile.getAbsolutePath());
+                        Uri savedUri = output.getSavedUri();
+                        Toast.makeText(getContext(), "Photo saved to Gallery!", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "Photo saved: " + savedUri);
 
-                        // Run TFLite classification
-                        classifyPhoto(photoFile);
+                        try {
+                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), savedUri);
+                            String result = tfliteHelper.classify(bitmap);
+
+                            Intent intent = new Intent(getContext(), ResultActivity.class);
+                            intent.putExtra("photoUri", savedUri.toString());
+                            intent.putExtra("prediction", result);
+                            startActivity(intent);
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            Toast.makeText(getContext(), "Failed to load photo", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
     }
@@ -141,7 +173,12 @@ public class FavoritesFragment extends Fragment {
             fis.close();
 
             String result = tfliteHelper.classify(bitmap);
-            Toast.makeText(getContext(), "Prediction: " + result, Toast.LENGTH_LONG).show();
+
+            Intent intent = new Intent(getContext(), ResultActivity.class);
+            intent.putExtra("photoPath", photoFile.getAbsolutePath());
+            intent.putExtra("prediction", result);
+            startActivity(intent);
+
 
         } catch (IOException e) {
             e.printStackTrace();

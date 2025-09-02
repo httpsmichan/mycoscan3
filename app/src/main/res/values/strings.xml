@@ -15,5 +15,10 @@
     <string name="user_example_com">user@example.com</string>
     <string name="account">Account</string>
     <string name="explore">Explore</string>
-
+    <string name="notice">Important Notice: This identification is not guaranteed. Do not consume mushrooms based on this result.</string>
+    <string name="prediction_will_appear_here">Prediction will appear here</string>
+    <string name="remember"> ⚠️ Remember: Always consult an expert before eating wild mushrooms.</string>
+    <string name="accept_continue"> Terms &amp; Conditions </string>
+    <string name="terms_text">
+</string>
 </resources>

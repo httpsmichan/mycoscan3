@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +14,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -54,6 +57,7 @@ public class HomeFragment extends Fragment {
         tipTextView = view.findViewById(R.id.tipTextView);
 
         db = FirebaseFirestore.getInstance();
+        checkUserTerms();
         loadAllPosts();
 
         List<String> tips = loadTipsFromJson();
@@ -63,6 +67,38 @@ public class HomeFragment extends Fragment {
         }
 
         return view;
+    }
+
+    private void checkUserTerms() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Log.e("HomeFragment", "No logged in user");
+            return;
+        }
+
+        String userId = user.getUid();
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists()) {
+                        Boolean accepted = document.getBoolean("acceptedTerms");
+                        if (accepted != null && accepted) {
+
+                            loadAllPosts();
+                            List<String> tips = loadTipsFromJson();
+                            if (!tips.isEmpty()) {
+                                String dailyTip = getDailyTip(tips);
+                                tipTextView.setText(dailyTip);
+                            }
+                        } else {
+                            Intent intent = new Intent(requireContext(), TermsActivity.class);
+                            startActivity(intent);
+                            requireActivity().finish();
+                        }
+                    } else {
+                        Log.e("HomeFragment", "User document not found");
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("HomeFragment", "Error checking terms", e));
     }
 
     private void loadAllPosts() {
@@ -97,11 +133,9 @@ public class HomeFragment extends Fragment {
 
             String json = new String(buffer, StandardCharsets.UTF_8);
 
-            // Parse root object
             JSONObject jsonObject = new JSONObject(json);
             JSONArray jsonArray = jsonObject.getJSONArray("tips");
 
-            // Loop through tips array
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject tipObject = jsonArray.getJSONObject(i);
                 tips.add(tipObject.getString("tip"));
