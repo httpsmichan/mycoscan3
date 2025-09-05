@@ -23,6 +23,8 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -33,6 +35,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
@@ -58,7 +61,36 @@ public class PostDetailActivity extends AppCompatActivity {
     private String currentUserId;
     private String currentUserVote = null;
     private TextView tvUpvotes, tvDownvotes;
+    private List<String> bannedWords = new ArrayList<>();
 
+    private void loadBannedWords() {
+        try {
+            InputStream is = getAssets().open("censored-words.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+
+            String json = new String(buffer, "UTF-8");
+            JSONObject obj = new JSONObject(json);
+
+            String[] categories = {"profanity", "insults", "sexual", "violence", "drugs", "slurs"};
+
+            for (String cat : categories) {
+                JSONArray arr = obj.getJSONArray(cat);
+                for (int i = 0; i < arr.length(); i++) {
+                    String word = arr.getString(i).toLowerCase();
+
+                    String regex = word.replaceAll(".", "$0+");
+
+                    bannedWords.add(regex);
+                }
+            }
+
+        } catch (Exception e) {
+            Log.e("Censorship", "Error loading banned words", e);
+        }
+    }
 
     private void getCurrentUsername(OnUsernameFetchedListener listener) {
         if (com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() == null) {
@@ -138,6 +170,7 @@ public class PostDetailActivity extends AppCompatActivity {
             Glide.with(this).load(imageUrl).into(ivDetailImage);
         }
 
+        loadBannedWords();
         loadVotes();
         setupMiniMap();
         setupComments();
@@ -145,6 +178,24 @@ public class PostDetailActivity extends AppCompatActivity {
         btnUpvote.setOnClickListener(v -> updateVote("upvote"));
         btnDownvote.setOnClickListener(v -> updateVote("downvote"));
     }
+
+    private String censorIfNeeded(String input) {
+        if (input == null || input.isEmpty()) return input;
+
+        String normalized = input.toLowerCase().replaceAll("[^a-z]", "");
+
+        for (String regex : bannedWords) {
+            if (normalized.matches(".*" + regex + ".*")) {
+
+                return input.replaceAll(".", "*");
+            }
+        }
+
+        return input;
+    }
+
+
+
 
     private void loadVotes() {
         db.collection("posts").document(postId)
@@ -303,11 +354,13 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private void postComment() {
-        String text = etComment.getText().toString().trim();
-        if (text.isEmpty()) {
+        String rawText = etComment.getText().toString().trim();
+        if (rawText.isEmpty()) {
             Toast.makeText(this, "Please enter a comment", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        final String text = censorIfNeeded(rawText);
 
         btnPostComment.setEnabled(false);
 

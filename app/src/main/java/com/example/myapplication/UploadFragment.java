@@ -36,10 +36,14 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
@@ -63,8 +67,8 @@ public class UploadFragment extends Fragment {
     private double latitude = 0.0;
     private double longitude = 0.0;
     private MapView mapPreview;
+    private List<String> bannedWords = new ArrayList<>();
 
-    // Image picker launcher
     private final ActivityResultLauncher<Intent> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == requireActivity().RESULT_OK && result.getData() != null) {
@@ -94,19 +98,18 @@ public class UploadFragment extends Fragment {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
-        // Spinner options
+        loadBannedWords();
+
         String[] categories = {"Edible", "Poisonous", "Inedible", "Medicinal"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, categories);
         spinnerCategory.setAdapter(adapter);
 
-        // Pick only images
         btnPickImage.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             intent.setType("image/*");
             pickImageLauncher.launch(intent);
         });
 
-        // Get location
         btnGetLocation.setOnClickListener(v -> {
             if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
@@ -115,25 +118,28 @@ public class UploadFragment extends Fragment {
             }
         });
 
-        // Map preview setup
         mapPreview = root.findViewById(R.id.mapPreview);
         Configuration.getInstance().setUserAgentValue(requireContext().getPackageName());
         mapPreview.setTileSource(TileSourceFactory.MAPNIK);
         mapPreview.setMultiTouchControls(true);
 
-        // Submit post
         btnSubmit.setOnClickListener(v -> {
             String mushroomType = etMushroomType.getText().toString().trim();
             String category = spinnerCategory.getSelectedItem().toString();
             String description = etDescription.getText().toString().trim();
+
+            final String finalMushroomType = mushroomType;
+            final String finalDescription = description;
 
             if (!DavaoGeoFence.isInsideDavao(latitude, longitude)) {
                 Toast.makeText(requireContext(), "You're outside Davao City. Posting is only allowed inside Davao City.", Toast.LENGTH_LONG).show();
                 return;
             }
 
-
-
+            if (containsBannedWord(mushroomType) || containsBannedWord(description)) {
+                Toast.makeText(requireContext(), "Inappropriate words detected. Please revise your input.", Toast.LENGTH_LONG).show();
+                return;
+            }
 
             MediaManager.get().upload(imageUri)
                     .unsigned("mycoscan")
@@ -150,9 +156,9 @@ public class UploadFragment extends Fragment {
                         public void onSuccess(String requestId, Map resultData) {
                             String cloudinaryUrl = resultData.get("secure_url").toString();
 
-                            // Fetch username first
+
                             getCurrentUsername(username -> {
-                                // Convert latitude/longitude to address
+
                                 final String[] addressHolder = { "Unknown location" };
                                 try {
                                     Geocoder geocoder = new Geocoder(requireContext());
@@ -164,11 +170,11 @@ public class UploadFragment extends Fragment {
                                     e.printStackTrace();
                                 }
 
-                                // Prepare post data
+
                                 Map<String, Object> post = new HashMap<>();
-                                post.put("mushroomType", mushroomType);
+                                post.put("mushroomType", finalMushroomType);
                                 post.put("category", category);
-                                post.put("description", description);
+                                post.put("description", finalDescription);
                                 post.put("latitude", latitude);
                                 post.put("longitude", longitude);
                                 post.put("location", addressHolder[0]);
@@ -178,7 +184,7 @@ public class UploadFragment extends Fragment {
                                 post.put("username", username);
                                 post.put("verified", "not verified");
 
-                                // Save to Firestore
+
                                 FirebaseFirestore.getInstance()
                                         .collection("posts")
                                         .add(post)
@@ -188,7 +194,7 @@ public class UploadFragment extends Fragment {
 
                                             Toast.makeText(requireContext(), "Post saved!", Toast.LENGTH_SHORT).show();
 
-                                            // Reset fields
+
                                             etMushroomType.setText("");
                                             etDescription.setText("");
                                             spinnerCategory.setSelection(0);
@@ -225,7 +231,7 @@ public class UploadFragment extends Fragment {
         return root;
     }
 
-    // Handle location permissions
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -271,13 +277,13 @@ public class UploadFragment extends Fragment {
         });
     }
 
-    // Get current Firebase user ID
+
     private String getCurrentUserId() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         return user != null ? user.getUid() : "anonymous";
     }
 
-    // Fetch username from Firestore users collection
+
     private void getCurrentUsername(OnUsernameFetchedListener listener) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
@@ -300,7 +306,7 @@ public class UploadFragment extends Fragment {
         }
     }
 
-    // Simple callback for async username fetch
+
     interface OnUsernameFetchedListener {
         void onUsernameFetched(String username);
     }
@@ -318,6 +324,55 @@ public class UploadFragment extends Fragment {
         super.onPause();
         if (mapPreview != null) {
             mapPreview.onPause();
+        }
+    }
+
+    private boolean containsBannedWord(String input) {
+        if (input == null || input.isEmpty()) return false;
+        String lower = input.toLowerCase();
+        for (String word : bannedWords) {
+            String regex = word.replaceAll("(.)", "$1+");
+            if (lower.matches(".*" + regex + ".*")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String censorBadWords(String input) {
+        String result = input;
+        for (String word : bannedWords) {
+            String regex = word.replaceAll("(.)", "$1+");
+            result = result.replaceAll("(?i)" + regex, "****");
+        }
+        return result;
+    }
+
+    private void loadBannedWords() {
+        try {
+
+            InputStream is = requireContext().getAssets().open("censored-words.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+
+            String json = new String(buffer, "UTF-8");
+            JSONObject obj = new JSONObject(json);
+
+
+            String[] categories = {"profanity", "insults", "sexual", "violence", "drugs", "slurs"};
+            for (String cat : categories) {
+                if (obj.has(cat)) {
+                    JSONArray arr = obj.getJSONArray(cat);
+                    for (int i = 0; i < arr.length(); i++) {
+                        bannedWords.add(arr.getString(i).toLowerCase());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(requireContext(), "Failed to load banned words", Toast.LENGTH_SHORT).show();
         }
     }
 }

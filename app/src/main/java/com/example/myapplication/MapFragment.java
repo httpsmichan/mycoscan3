@@ -83,7 +83,7 @@ public class MapFragment extends Fragment {
                                     @Override
                                     public void onResourceReady(@NonNull Bitmap resource,
                                                                 @Nullable Transition<? super Bitmap> transition) {
-                                        int size = 50;
+                                        int size = 70;
                                         Bitmap smallBitmap = Bitmap.createScaledBitmap(resource, size, size, false);
                                         marker.setIcon(new BitmapDrawable(getResources(), smallBitmap));
                                         mapView.invalidate();
