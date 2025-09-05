@@ -15,6 +15,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -43,13 +46,18 @@ public class PostDetailActivity extends AppCompatActivity {
     private RecyclerView rvComments;
     private EditText etComment;
     private Button btnPostComment;
-
     private List<Comment> commentList;
     private CommentAdapter commentAdapter;
     private FirebaseFirestore db;
 
     private String username;
     private String postId;
+    private Button btnUpvote, btnDownvote;
+    private TextView tvScore;
+
+    private String currentUserId;
+    private String currentUserVote = null;
+    private TextView tvUpvotes, tvDownvotes;
 
 
     private void getCurrentUsername(OnUsernameFetchedListener listener) {
@@ -77,7 +85,6 @@ public class PostDetailActivity extends AppCompatActivity {
                 });
     }
 
-
     interface OnUsernameFetchedListener {
         void onUsernameFetched(String username);
     }
@@ -88,13 +95,11 @@ public class PostDetailActivity extends AppCompatActivity {
         Configuration.getInstance().setUserAgentValue(getPackageName());
         setContentView(R.layout.activity_post_detail);
 
-
         db = FirebaseFirestore.getInstance();
-
+        currentUserId = FirebaseAuth.getInstance().getUid();
 
         Intent intent = getIntent();
         if (intent == null) {
-            Log.e("PostDetailActivity", "Intent is null! Closing activity.");
             Toast.makeText(this, "Error loading post details", Toast.LENGTH_SHORT).show();
             finish();
             return;
@@ -108,52 +113,124 @@ public class PostDetailActivity extends AppCompatActivity {
         latitude = intent.getDoubleExtra("latitude", 0.0);
         longitude = intent.getDoubleExtra("longitude", 0.0);
 
-
-        if (intent.getExtras() != null) {
-            Log.d("PostDetailActivity", "All received extras:");
-            for (String key : intent.getExtras().keySet()) {
-                Object value = intent.getExtras().get(key);
-                Log.d("PostDetailActivity", key + " = " + value);
-            }
-        } else {
-            Log.e("PostDetailActivity", "No extras received at all!");
-        }
-
-
         if (postId == null || postId.isEmpty()) {
-            Log.e("PostDetailActivity", "postId is missing! Available extras: " +
-                    (intent.getExtras() != null ? intent.getExtras().keySet().toString() : "none"));
-            Toast.makeText(this, "Post ID is missing. Cannot load post details.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Post ID missing", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
-
-        Log.d("PostDetailActivity", "Loading post with ID: " + postId);
 
         ImageView ivDetailImage = findViewById(R.id.ivDetailImage);
         TextView tvDetailType = findViewById(R.id.tvDetailType);
         TextView tvDetailDesc = findViewById(R.id.tvDetailDesc);
         TextView tvDetailUser = findViewById(R.id.tvDetailUser);
         miniMapView = findViewById(R.id.miniMapView);
-        Button btnOpenFullMap = findViewById(R.id.btnOpenFullMap);
+        btnUpvote = findViewById(R.id.btnUpvote);
+        btnDownvote = findViewById(R.id.btnDownvote);
+        tvUpvotes = findViewById(R.id.tvUpvotes);
+        tvDownvotes = findViewById(R.id.tvDownvotes);
+
 
         tvDetailType.setText(mushroomType != null ? mushroomType : "Unknown Type");
         tvDetailDesc.setText(description != null ? description : "No description available");
         tvDetailUser.setText("Posted by: " + (username != null ? username : "Unknown"));
 
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(this)
-                    .load(imageUrl)
-                    .placeholder(android.R.drawable.ic_menu_report_image)
-                    .error(android.R.drawable.ic_menu_report_image)
-                    .into(ivDetailImage);
-        } else {
-            ivDetailImage.setImageResource(android.R.drawable.ic_menu_report_image);
+            Glide.with(this).load(imageUrl).into(ivDetailImage);
         }
 
+        loadVotes();
         setupMiniMap();
-
         setupComments();
+
+        btnUpvote.setOnClickListener(v -> updateVote("upvote"));
+        btnDownvote.setOnClickListener(v -> updateVote("downvote"));
+    }
+
+    private void loadVotes() {
+        db.collection("posts").document(postId)
+                .collection("votes")
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null) return;
+                    if (snapshot != null) {
+                        int upvotes = 0;
+                        int downvotes = 0;
+
+                        for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot) {
+                            String type = doc.getString("type");
+                            if ("upvote".equals(type)) upvotes++;
+                            else if ("downvote".equals(type)) downvotes++;
+                        }
+
+                        tvUpvotes.setText("+" + upvotes);
+                        tvDownvotes.setText("-" + downvotes);
+
+                        if (currentUserId != null) {
+                            currentUserVote = null;
+                            for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
+                                if (doc.getId().equals(currentUserId)) {
+                                    currentUserVote = doc.getString("type");
+                                    break;
+                                }
+                            }
+                            updateVoteUI(currentUserVote);
+                        } else {
+                            updateVoteUI(null);
+                        }
+                    }
+                });
+    }
+
+    private void updateVote(String voteType) {
+        if (currentUserId == null) {
+            Toast.makeText(this, "Login required to vote", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (voteType.equals(currentUserVote)) {
+
+            db.collection("posts").document(postId)
+                    .collection("votes").document(currentUserId)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> {
+                        currentUserVote = null;
+                        updateVoteUI(null);
+
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Failed to remove vote", Toast.LENGTH_SHORT).show()
+                    );
+        } else {
+
+            Map<String, Object> voteData = new HashMap<>();
+            voteData.put("type", voteType);
+            voteData.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+
+            db.collection("posts").document(postId)
+                    .collection("votes").document(currentUserId)
+                    .set(voteData)
+                    .addOnSuccessListener(aVoid -> {
+                        currentUserVote = voteType;
+                        updateVoteUI(voteType);
+
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Failed to vote", Toast.LENGTH_SHORT).show()
+                    );
+        }
+    }
+
+
+    private void updateVoteUI(String userVote) {
+        if ("upvote".equals(userVote)) {
+            btnUpvote.setBackgroundColor(getResources().getColor(R.color.vote_selected));
+            btnDownvote.setBackgroundColor(getResources().getColor(R.color.vote_unselected));
+        } else if ("downvote".equals(userVote)) {
+            btnUpvote.setBackgroundColor(getResources().getColor(R.color.vote_unselected));
+            btnDownvote.setBackgroundColor(getResources().getColor(R.color.vote_selected));
+        } else {
+            btnUpvote.setBackgroundColor(getResources().getColor(R.color.vote_unselected));
+            btnDownvote.setBackgroundColor(getResources().getColor(R.color.vote_unselected));
+        }
     }
 
     private void setupMiniMap() {
@@ -232,7 +309,7 @@ public class PostDetailActivity extends AppCompatActivity {
             return;
         }
 
-        btnPostComment.setEnabled(false); // Prevent double-posting
+        btnPostComment.setEnabled(false);
 
         getCurrentUsername(currentUsername -> {
             Map<String, Object> commentData = new HashMap<>();
