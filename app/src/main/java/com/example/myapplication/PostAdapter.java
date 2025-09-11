@@ -7,12 +7,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -43,6 +47,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         // Username
         holder.tvDetailUser.setText(post.getUsername() != null ? post.getUsername() : "Unknown");
 
+        // Timestamp formatting
         if (post.getTimestamp() > 0) {
             long now = System.currentTimeMillis();
             long diff = now - post.getTimestamp();
@@ -55,11 +60,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             String timeText;
             if (hours < 24) {
                 if (hours == 0) {
-                    if (minutes <= 1) {
-                        timeText = "1 minute ago";
-                    } else {
-                        timeText = minutes + " minutes ago";
-                    }
+                    timeText = (minutes <= 1) ? "1 minute ago" : minutes + " minutes ago";
                 } else {
                     timeText = hours + (hours == 1 ? " hour ago" : " hours ago");
                 }
@@ -99,13 +100,12 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             holder.ivPostImage.setImageResource(android.R.drawable.ic_menu_report_image);
         }
 
-        // Click → PostDetailActivity
+        // Open PostDetailActivity on click
         holder.itemView.setOnClickListener(v -> {
-            // ✅ ADD LOGGING TO DEBUG
             Log.d("PostAdapter", "Clicking post with ID: " + post.getPostId());
 
             Intent intent = new Intent(v.getContext(), PostDetailActivity.class);
-            intent.putExtra("postId", post.getPostId()); // ← ADD THIS LINE!
+            intent.putExtra("postId", post.getPostId());
             intent.putExtra("imageUrl", post.getImageUrl());
             intent.putExtra("mushroomType", post.getMushroomType());
             intent.putExtra("description", post.getDescription());
@@ -114,10 +114,30 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             intent.putExtra("longitude", post.getLongitude());
             intent.putExtra("verified", post.getVerified());
 
-            // ✅ ADD LOGGING TO VERIFY DATA
-            Log.d("PostAdapter", "Passing postId: " + post.getPostId());
-
             v.getContext().startActivity(intent);
+        });
+
+        // Three-dot menu (Delete / Report)
+        holder.menuOptions.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(context, holder.menuOptions);
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+            if (currentUser != null && post.getUserId().equals(currentUser.getUid())) {
+                popup.getMenu().add("Delete");
+            } else {
+                popup.getMenu().add("Report");
+            }
+
+            popup.setOnMenuItemClickListener(item -> {
+                if (item.getTitle().equals("Delete")) {
+                    deletePost(post.getPostId(), position);
+                } else if (item.getTitle().equals("Report")) {
+                    reportPost(post.getPostId());
+                }
+                return true;
+            });
+
+            popup.show();
         });
     }
 
@@ -126,9 +146,29 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         return postList.size();
     }
 
+    private void deletePost(String postId, int position) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("posts").document(postId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    postList.remove(position);
+                    notifyItemRemoved(position);
+                    Log.d("PostAdapter", "Post deleted: " + postId);
+                })
+                .addOnFailureListener(e -> Log.e("PostAdapter", "Error deleting post", e));
+    }
+
+    private void reportPost(String postId) {
+        Intent intent = new Intent(context, ReportActivity.class);
+        intent.putExtra("postId", postId);
+        context.startActivity(intent);
+    }
+
+
+
     static class PostViewHolder extends RecyclerView.ViewHolder {
         TextView tvDetailUser, tvTimeStamp, tvVerifiedStatus, tvMushroomType, tvDescription;
-        ImageView ivPostImage;
+        ImageView ivPostImage, menuOptions;
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -138,6 +178,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvMushroomType = itemView.findViewById(R.id.tvMushroomType);
             tvDescription = itemView.findViewById(R.id.tvDescription);
             ivPostImage = itemView.findViewById(R.id.ivPostImage);
+            menuOptions = itemView.findViewById(R.id.menuOptions);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -28,11 +29,19 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
+import android.app.AlertDialog;
+import android.widget.EditText;
+import android.widget.Toast;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+
 public class HomeFragment extends Fragment {
 
+    private FloatingActionButton fabReport;
     private RecyclerView recyclerPosts;
     private PostAdapter adapter;
     private final List<Post> postList = new ArrayList<>();
@@ -42,6 +51,7 @@ public class HomeFragment extends Fragment {
 
     public HomeFragment() {}
 
+    @SuppressLint("MissingInflatedId")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -59,6 +69,13 @@ public class HomeFragment extends Fragment {
         db = FirebaseFirestore.getInstance();
         checkUserTerms();
         loadAllPosts();
+
+        fabReport = view.findViewById(R.id.fabReport);
+
+        fabReport.setOnClickListener(v -> {
+            // Show a dialog form
+            showReportDialog();
+        });
 
         List<String> tips = loadTipsFromJson();
         if (!tips.isEmpty()) {
@@ -166,4 +183,50 @@ public class HomeFragment extends Fragment {
             return prefs.getString("tip_of_day", "Stay curious about mushrooms!");
         }
     }
+
+    private void showReportDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Experiencing a problem?");
+        builder.setMessage("Share it with us!");
+
+        // Input field
+        final EditText input = new EditText(requireContext());
+        input.setHint("Describe the issue...");
+        builder.setView(input);
+
+        builder.setPositiveButton("Submit", (dialog, which) -> {
+            String reportText = input.getText().toString().trim();
+            if (!reportText.isEmpty()) {
+                // Save to Firestore
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+                String userId = (user != null) ? user.getUid() : "anonymous";
+
+                // Create report object
+                HashMap<String, Object> report = new HashMap<>();
+                report.put("label", "app report");
+                report.put("message", reportText);
+                report.put("userId", userId);
+                report.put("timestamp", System.currentTimeMillis());
+
+                db.collection("reports")
+                        .add(report)
+                        .addOnSuccessListener(docRef ->
+                                Toast.makeText(requireContext(), "Report submitted. Thank you!", Toast.LENGTH_SHORT).show()
+                        )
+                        .addOnFailureListener(e ->
+                                Toast.makeText(requireContext(), "Failed to submit report: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                        );
+
+            } else {
+                Toast.makeText(requireContext(), "Please enter something", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
 }

@@ -48,6 +48,17 @@
             android:text="Not Verified"
             android:textColor="@android:color/holo_green_dark"
             android:textStyle="bold"/>
+
+        <ImageView
+            android:id="@+id/menuOptions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_more_vert"
+            android:contentDescription="Options"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="8dp"
+            android:padding="8dp" />
     </LinearLayout>
 
     <!-- Post image -->
@@ -58,6 +69,8 @@
         android:scaleType="centerCrop"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"/>
+
+
 
     <!-- Mushroom type -->
     <TextView
