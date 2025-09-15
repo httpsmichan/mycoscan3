@@ -12,6 +12,10 @@ import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SecurityActivity extends AppCompatActivity {
 
@@ -49,8 +53,23 @@ public class SecurityActivity extends AppCompatActivity {
                         .addOnSuccessListener(aVoid -> {
                             // Step 2: Update password
                             user.updatePassword(newPassword)
-                                    .addOnSuccessListener(aVoid2 ->
-                                            Toast.makeText(this, "Password updated!", Toast.LENGTH_SHORT).show())
+                                    .addOnSuccessListener(aVoid2 -> {
+                                        Toast.makeText(this, "Password updated!", Toast.LENGTH_SHORT).show();
+
+                                        // 🔹 Log password change
+                                        Map<String, Object> log = new HashMap<>();
+                                        log.put("username", user.getEmail()); // or fetch from Firestore if you store usernames
+                                        log.put("datestamp", System.currentTimeMillis());
+                                        log.put("reason", "user changed password");
+
+                                        FirebaseFirestore.getInstance()
+                                                .collection("logs")
+                                                .add(log)
+                                                .addOnSuccessListener(doc ->
+                                                        Toast.makeText(this, "Password change logged!", Toast.LENGTH_SHORT).show())
+                                                .addOnFailureListener(e ->
+                                                        Toast.makeText(this, "Password updated but log failed.", Toast.LENGTH_SHORT).show());
+                                    })
                                     .addOnFailureListener(e ->
                                             Toast.makeText(this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                         })

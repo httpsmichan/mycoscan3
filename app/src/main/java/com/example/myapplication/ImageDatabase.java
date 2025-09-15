@@ -14,6 +14,8 @@ public class ImageDatabase extends Application {
         // Cloudinary configuration
         Map config = new HashMap();
         config.put("cloud_name", "diaw4uoea");
+        config.put("api_key", "899786479714939");
+        config.put("api_secret", "Opa-iYWYzcS3Z3mh1aqpfQeZncg");
 
         // Initialize Cloudinary
         MediaManager.init(this, config);

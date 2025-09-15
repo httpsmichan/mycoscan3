@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <!-- 👇 Single parent LinearLayout -->
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Container with form -->
+        <LinearLayout
+            android:id="@+id/container"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Step 1: Affiliation -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Are you affiliated with an institution?"
+                android:textSize="18sp"
+                android:paddingBottom="8dp"/>
+
+            <RadioGroup
+                android:id="@+id/radioAffiliation"
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <RadioButton
+                    android:id="@+id/radioYes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Yes"/>
+                <RadioButton
+                    android:id="@+id/radioNo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No"/>
+            </RadioGroup>
+
+            <EditText
+                android:id="@+id/editInstitution"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter Institution Name"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"/>
+
+            <!-- Step 2: Upload TOR -->
+            <TextView
+                android:id="@+id/textUploadTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Upload your TOR"
+                android:textSize="18sp"
+                android:layout_marginTop="24dp"
+                android:visibility="gone"/>
+
+            <RadioGroup
+                android:id="@+id/radioUploadOption"
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone">
+                <RadioButton
+                    android:id="@+id/radioImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Image"/>
+                <RadioButton
+                    android:id="@+id/radioFile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PDF (recommended)"/>
+            </RadioGroup>
+
+            <Button
+                android:id="@+id/btnChooseImage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Take Photo / Choose Image"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/btnChooseFile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Upload PDF File"
+                android:visibility="gone"/>
+
+            <!-- Preview -->
+            <TextView
+                android:id="@+id/textFileName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:visibility="gone"
+                android:padding="8dp"/>
+
+            <EditText
+                android:id="@+id/editGmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter your Gmail"
+                android:inputType="textEmailAddress"
+                android:layout_marginTop="12dp"
+                android:visibility="gone" />
+
+            <!-- Submit -->
+            <Button
+                android:id="@+id/btnSubmit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Submit Application"
+                android:visibility="gone"
+                android:layout_marginTop="24dp"/>
+        </LinearLayout>
+
+        <!-- Already submitted message -->
+        <TextView
+            android:id="@+id/textAlreadySubmitted"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="You have already submitted your application. Please wait for admin’s approval. We will notify you via email."
+            android:textSize="16sp"
+            android:textColor="@android:color/holo_red_dark"
+            android:visibility="gone"
+            android:padding="16dp"
+            android:gravity="center"/>
+    </LinearLayout>
+</ScrollView>

@@ -123,7 +123,24 @@ public class SignupActivity extends AppCompatActivity {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             saveUserDataToFirestore(user.getUid(), username, fullName, email);
-                            Toast.makeText(SignupActivity.this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+
+                            // 🔹 Log the new account creation
+                            Map<String, Object> log = new HashMap<>();
+                            log.put("username", username);
+                            log.put("datestamp", System.currentTimeMillis());
+                            log.put("reason", "new account was made");
+
+                            FirebaseFirestore.getInstance()
+                                    .collection("logs")
+                                    .add(log)
+                                    .addOnSuccessListener(doc -> {
+                                        // optional: debug toast
+                                        Toast.makeText(SignupActivity.this, "Account created", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(SignupActivity.this, "Account created but log failed.", Toast.LENGTH_SHORT).show();
+                                    });
+
                             startActivity(new Intent(SignupActivity.this, TabbedActivity.class));
                             finish();
                         }

@@ -137,7 +137,22 @@ public class UploadFragment extends Fragment {
             }
 
             if (containsBannedWord(mushroomType) || containsBannedWord(description)) {
-                Toast.makeText(requireContext(), "Inappropriate words detected. Please revise your input.", Toast.LENGTH_LONG).show();
+                getCurrentUsername(username -> {
+                    Map<String, Object> log = new HashMap<>();
+                    log.put("username", username);
+                    log.put("datestamp", System.currentTimeMillis());
+                    log.put("reason", "use of banned words");
+
+                    FirebaseFirestore.getInstance()
+                            .collection("logs")
+                            .add(log)
+                            .addOnSuccessListener(doc ->
+                                    Toast.makeText(requireContext(), "Inappropriate words detected. Logged for review.", Toast.LENGTH_LONG).show()
+                            )
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(requireContext(), "Failed to log banned word use.", Toast.LENGTH_SHORT).show()
+                            );
+                });
                 return;
             }
 
@@ -193,7 +208,6 @@ public class UploadFragment extends Fragment {
                                             documentReference.update("postId", postId);
 
                                             Toast.makeText(requireContext(), "Post saved!", Toast.LENGTH_SHORT).show();
-
 
                                             etMushroomType.setText("");
                                             etDescription.setText("");

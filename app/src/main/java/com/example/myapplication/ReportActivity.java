@@ -10,6 +10,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ReportActivity extends AppCompatActivity {
 
     private EditText etReason;
@@ -44,6 +47,24 @@ public class ReportActivity extends AppCompatActivity {
                     .add(report)
                     .addOnSuccessListener(aVoid -> {
                         Toast.makeText(this, "Report submitted", Toast.LENGTH_SHORT).show();
+
+                        // 🔹 Log the report action
+                        Map<String, Object> log = new HashMap<>();
+                        log.put("username", FirebaseAuth.getInstance().getCurrentUser() != null
+                                ? FirebaseAuth.getInstance().getCurrentUser().getEmail()
+                                : "anonymous");
+                        log.put("postId", postId);
+                        log.put("datestamp", System.currentTimeMillis());
+                        log.put("reason", "user reported a post (postId: " + postId + ")");
+
+                        FirebaseFirestore.getInstance()
+                                .collection("logs")
+                                .add(log)
+                                .addOnSuccessListener(doc ->
+                                        Toast.makeText(this, "Report logged", Toast.LENGTH_SHORT).show())
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, "Report saved but log failed", Toast.LENGTH_SHORT).show());
+
                         finish();
                     })
                     .addOnFailureListener(e ->

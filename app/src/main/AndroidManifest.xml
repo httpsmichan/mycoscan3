@@ -31,9 +31,15 @@
         android:theme="@style/Theme.MyApplication"
         tools:replace="android:fullBackupContent">
         <activity
+            android:name=".Verification"
+            android:exported="false" />
+        <activity
+            android:name=".UserPostAdapter"
+            android:exported="false" />
+        <activity
             android:name=".ReportActivity"
             android:exported="false"
-            android:theme="@style/CustomReportDialog"/>
+            android:theme="@style/CustomReportDialog" />
         <activity
             android:name=".Report"
             android:exported="false" />
