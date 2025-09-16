@@ -76,14 +76,23 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             holder.tvTimeStamp.setText("Unknown time");
         }
 
-        // Verified status
+        // Verified status with shield badges
         String verified = post.getVerified() != null ? post.getVerified() : "Not Verified";
-        holder.tvVerifiedStatus.setText(verified);
 
         if (verified.equalsIgnoreCase("verified")) {
-            holder.tvVerifiedStatus.setTextColor(holder.itemView.getResources().getColor(android.R.color.holo_green_dark));
+            holder.ivVerificationBadge.setImageResource(R.drawable.ic_trusted_badge);
+            holder.ivVerificationBadge.setVisibility(View.VISIBLE);
+            holder.tvVerifiedStatus.setVisibility(View.GONE);
+        } else if (verified.equalsIgnoreCase("Unreliable")) {
+            holder.ivVerificationBadge.setImageResource(R.drawable.ic_not_trusted_badge);
+            holder.ivVerificationBadge.setVisibility(View.VISIBLE);
+            holder.tvVerifiedStatus.setVisibility(View.GONE);
         } else {
-            holder.tvVerifiedStatus.setTextColor(holder.itemView.getResources().getColor(android.R.color.holo_red_dark));
+            // For "Not Verified" or pending posts, hide the badge
+            holder.ivVerificationBadge.setVisibility(View.GONE);
+            holder.tvVerifiedStatus.setText("Pending Review");
+            holder.tvVerifiedStatus.setTextColor(holder.itemView.getResources().getColor(android.R.color.darker_gray));
+            holder.tvVerifiedStatus.setVisibility(View.VISIBLE);
         }
 
         // Mushroom type & description
@@ -164,11 +173,9 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         context.startActivity(intent);
     }
 
-
-
     static class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView tvDetailUser, tvTimeStamp, tvVerifiedStatus, tvMushroomType, tvDescription;
-        ImageView ivPostImage, menuOptions;
+        TextView tvDetailUser, tvTimeStamp, tvMushroomType, tvDescription, tvVerifiedStatus;
+        ImageView ivPostImage, menuOptions, ivVerificationBadge; // Added badge ImageView
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -179,6 +186,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvDescription = itemView.findViewById(R.id.tvDescription);
             ivPostImage = itemView.findViewById(R.id.ivPostImage);
             menuOptions = itemView.findViewById(R.id.menuOptions);
+            ivVerificationBadge = itemView.findViewById(R.id.ivVerificationBadge); // Add this line
         }
     }
 }

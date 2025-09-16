@@ -13,6 +13,7 @@ public class Post {
     private String verified;
     private String location;
 
+
     public Post() {}
 
     public Post(String mushroomType, String description, String imageUrl,

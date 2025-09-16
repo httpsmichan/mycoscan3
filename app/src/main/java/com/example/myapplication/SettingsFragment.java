@@ -46,10 +46,11 @@ public class SettingsFragment extends Fragment {
     private RecyclerView recyclerUserPosts;
     private UserPostAdapter postAdapter;
     private List<Post> postList;
-    private ImageView imageProfile;
+    private ImageView imageProfile, imageVerifiedBadge;
 
     private FirebaseFirestore db;
     private Uri selectedImageUri;
+
 
     @Nullable
     @Override
@@ -64,6 +65,7 @@ public class SettingsFragment extends Fragment {
         textFollowers = view.findViewById(R.id.textFollowers);
         textFollowing = view.findViewById(R.id.textFollowing);
         textPosts = view.findViewById(R.id.textPosts);
+        imageVerifiedBadge = view.findViewById(R.id.imageVerifiedBadge);
 
         // Tab buttons and content containers
         btnAboutTab = view.findViewById(R.id.btnAboutTab);
@@ -85,6 +87,7 @@ public class SettingsFragment extends Fragment {
         postList = new ArrayList<>();
         postAdapter = new UserPostAdapter(getContext(), postList);
         recyclerUserPosts.setAdapter(postAdapter);
+
 
         db = FirebaseFirestore.getInstance();
 
@@ -134,13 +137,37 @@ public class SettingsFragment extends Fragment {
             db.collection("users").document(user.getUid()).get()
                     .addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot.exists()) {
+                            String fullName = documentSnapshot.getString("fullName");
                             String username = documentSnapshot.getString("username");
-                            textUsername.setText((username != null) ? username : "User");
-                            textUserHandle.setText("@janedoe"); // Placeholder
-                            textUserBio.setText("Digital Creator and Designer."); // Placeholder
-                            textFollowers.setText("12.5k"); // TODO: Load real values
-                            textFollowing.setText("500");   // TODO: Load real values
 
+                            if (fullName != null && !fullName.isEmpty()) {
+                                textUsername.setText(fullName);
+                            } else {
+                                textUsername.setText("User");
+                            }
+
+                            if (username != null && !username.isEmpty()) {
+                                textUserHandle.setText("@" + username);
+                            } else {
+                                textUserHandle.setText("@unknown");
+                            }
+
+                            // 🔑 Check applications collection for verification
+                            db.collection("applications")
+                                    .whereEqualTo("userId", user.getUid())
+                                    .get()
+                                    .addOnSuccessListener(query -> {
+                                        if (!query.isEmpty()) {
+                                            String status = query.getDocuments().get(0).getString("status");
+                                            if ("approved".equalsIgnoreCase(status)) {
+                                                imageVerifiedBadge.setVisibility(View.VISIBLE);
+                                            } else {
+                                                imageVerifiedBadge.setVisibility(View.GONE);
+                                            }
+                                        }
+                                    });
+
+                            // Profile photo
                             String photoUrl = documentSnapshot.getString("profilePhoto");
                             if (photoUrl != null && !photoUrl.isEmpty()) {
                                 Glide.with(this)
@@ -154,7 +181,8 @@ public class SettingsFragment extends Fragment {
                             }
                         }
                     });
-            loadUserPosts(user.getUid()); // live updates here
+
+            loadUserPosts(user.getUid());
         } else {
             textUsername.setText("No user signed in");
         }

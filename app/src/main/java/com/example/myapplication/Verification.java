@@ -134,7 +134,25 @@ public class Verification extends AppCompatActivity {
                 .addOnSuccessListener(query -> {
                     if (!query.isEmpty()) {
                         findViewById(R.id.container).setVisibility(View.GONE);
-                        textAlreadySubmitted.setVisibility(TextView.VISIBLE);
+                        textAlreadySubmitted.setVisibility(View.VISIBLE);
+
+                        // Assuming only one application per user
+                        String status = query.getDocuments().get(0).getString("status");
+
+                        if ("approved".equalsIgnoreCase(status)) {
+                            textAlreadySubmitted.setText("You are verified");
+                            textAlreadySubmitted.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+
+                            // ✅ Update user's verified flag
+                            db.collection("users")
+                                    .document(currentUser.getUid())
+                                    .update("verified", true);
+
+
+                        } else {
+                            textAlreadySubmitted.setText("You have already submitted your application. Please wait for admin’s approval. We will notify you via email.");
+                            textAlreadySubmitted.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                        }
                     }
                 });
     }
