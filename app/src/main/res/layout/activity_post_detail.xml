@@ -10,15 +10,35 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Username -->
-        <TextView
-            android:id="@+id/tvDetailUser"
-            android:layout_width="wrap_content"
+        <!-- Header with Username and Menu -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=" username "
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <!-- Username -->
+            <TextView
+                android:id="@+id/tvDetailUser"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text=" username "
+                android:textStyle="bold"
+                android:textSize="16sp"/>
+
+            <!-- Three dot menu -->
+            <ImageView
+                android:id="@+id/ivMenuOptions"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_more_vert"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp"
+                android:contentDescription="Menu options"/>
+
+        </LinearLayout>
 
         <!-- Image -->
         <ImageView
@@ -65,9 +85,7 @@
                 android:textSize="16sp"
                 android:textStyle="bold"/>
 
-
         </LinearLayout>
-
 
         <!-- Mushroom Type -->
         <TextView
@@ -112,7 +130,6 @@
                 android:padding="0dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp"/>
-
 
         </FrameLayout>
 

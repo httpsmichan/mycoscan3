@@ -157,7 +157,7 @@ public class UploadFragment extends Fragment {
             }
 
             MediaManager.get().upload(imageUri)
-                    .unsigned("mycoscan")
+                    .unsigned("mushrooms")
                     .callback(new UploadCallback() {
                         @Override
                         public void onStart(String requestId) {

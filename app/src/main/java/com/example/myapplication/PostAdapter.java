@@ -11,6 +11,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -99,13 +100,42 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.tvMushroomType.setText(post.getMushroomType() != null ? post.getMushroomType() : "Unknown type");
         holder.tvDescription.setText(post.getDescription() != null ? post.getDescription() : "");
 
-        // Load image
-        if (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) {
+        // --------------------------
+        // Load image with debug logging (replaced section)
+        // --------------------------
+        String imageUrl = post.getImageUrl();
+        Log.d("PostAdapter", "Loading image for post " + post.getPostId() + " with URL: " + imageUrl);
+
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Log.d("PostAdapter", "Image URL is valid, loading with Glide");
+
             Glide.with(holder.ivPostImage.getContext())
-                    .load(post.getImageUrl())
+                    .load(imageUrl)
                     .placeholder(android.R.drawable.ic_menu_report_image)
+                    .error(android.R.drawable.ic_menu_close_clear_cancel) // Add error placeholder
+                    .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable com.bumptech.glide.load.engine.GlideException e,
+                                                    Object model,
+                                                    com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target,
+                                                    boolean isFirstResource) {
+                            Log.e("PostAdapter", "Glide failed to load image: " + imageUrl, e);
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(android.graphics.drawable.Drawable resource,
+                                                       Object model,
+                                                       com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target,
+                                                       com.bumptech.glide.load.DataSource dataSource,
+                                                       boolean isFirstResource) {
+                            Log.d("PostAdapter", "Glide successfully loaded image: " + imageUrl);
+                            return false;
+                        }
+                    })
                     .into(holder.ivPostImage);
         } else {
+            Log.d("PostAdapter", "Image URL is null or empty, using placeholder");
             holder.ivPostImage.setImageResource(android.R.drawable.ic_menu_report_image);
         }
 
@@ -118,6 +148,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             intent.putExtra("imageUrl", post.getImageUrl());
             intent.putExtra("mushroomType", post.getMushroomType());
             intent.putExtra("description", post.getDescription());
+            intent.putExtra("userId", post.getUserId());
             intent.putExtra("username", post.getUsername());
             intent.putExtra("latitude", post.getLatitude());
             intent.putExtra("longitude", post.getLongitude());

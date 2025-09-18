@@ -127,9 +127,14 @@ public class HomeFragment extends Fragment {
                     for (QueryDocumentSnapshot doc : snapshots) {
                         Post post = doc.toObject(Post.class);
                         post.setPostId(doc.getId());
-                        postList.add(post);
 
-                        Log.d("HomeFragment", "Loaded post with ID: " + doc.getId());
+                        // Debug logging
+                        Log.d("HomeFragment", "Post ID: " + doc.getId());
+                        Log.d("HomeFragment", "Image URL: " + post.getImageUrl());
+                        Log.d("HomeFragment", "Username: " + post.getUsername());
+                        Log.d("HomeFragment", "Mushroom Type: " + post.getMushroomType());
+
+                        postList.add(post);
                     }
                     adapter.notifyDataSetChanged();
                     Log.d("HomeFragment", "Loaded " + postList.size() + " posts");

@@ -86,4 +86,8 @@ dependencies {
         exclude(group = "com.cloudinary", module = "cloudinary-android-preprocess")
         exclude(group = "com.linkedin.android.litr", module = "litr")
     }
+
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+    implementation(libs.glide.okhttp3)
 }

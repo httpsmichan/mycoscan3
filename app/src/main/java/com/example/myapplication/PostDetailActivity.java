@@ -7,6 +7,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.PopupMenu;
+import androidx.appcompat.app.AlertDialog;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,6 +36,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.MenuItem;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -55,8 +58,10 @@ public class PostDetailActivity extends AppCompatActivity {
 
     private String username;
     private String postId;
+    private String postAuthorId;
     private Button btnUpvote, btnDownvote;
     private TextView tvScore;
+    private ImageView ivMenuOptions;
 
     private String currentUserId;
     private String currentUserVote = null;
@@ -80,9 +85,7 @@ public class PostDetailActivity extends AppCompatActivity {
                 JSONArray arr = obj.getJSONArray(cat);
                 for (int i = 0; i < arr.length(); i++) {
                     String word = arr.getString(i).toLowerCase();
-
                     String regex = word.replaceAll(".", "$0+");
-
                     bannedWords.add(regex);
                 }
             }
@@ -142,6 +145,7 @@ public class PostDetailActivity extends AppCompatActivity {
         String description = intent.getStringExtra("description");
         username = intent.getStringExtra("username");
         postId = intent.getStringExtra("postId");
+        postAuthorId = intent.getStringExtra("userId"); // Make sure to pass this from previous activity
         latitude = intent.getDoubleExtra("latitude", 0.0);
         longitude = intent.getDoubleExtra("longitude", 0.0);
 
@@ -160,7 +164,7 @@ public class PostDetailActivity extends AppCompatActivity {
         btnDownvote = findViewById(R.id.btnDownvote);
         tvUpvotes = findViewById(R.id.tvUpvotes);
         tvDownvotes = findViewById(R.id.tvDownvotes);
-
+        ivMenuOptions = findViewById(R.id.ivMenuOptions);
 
         tvDetailType.setText(mushroomType != null ? mushroomType : "Unknown Type");
         tvDetailDesc.setText(description != null ? description : "No description available");
@@ -174,9 +178,122 @@ public class PostDetailActivity extends AppCompatActivity {
         loadVotes();
         setupMiniMap();
         setupComments();
+        setupMenuOptions();
 
         btnUpvote.setOnClickListener(v -> updateVote("upvote"));
         btnDownvote.setOnClickListener(v -> updateVote("downvote"));
+    }
+
+    private void setupMenuOptions() {
+        ivMenuOptions.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(this, ivMenuOptions);
+            popup.getMenuInflater().inflate(R.menu.menu_post_options, popup.getMenu());
+
+            // Show appropriate menu item based on ownership
+            if (isPostOwnedByCurrentUser()) {
+                popup.getMenu().findItem(R.id.menu_delete).setVisible(true);
+                popup.getMenu().findItem(R.id.menu_report).setVisible(false);
+            } else {
+                popup.getMenu().findItem(R.id.menu_delete).setVisible(false);
+                popup.getMenu().findItem(R.id.menu_report).setVisible(true);
+            }
+
+            popup.setOnMenuItemClickListener(item -> {
+                int itemId = item.getItemId();
+                if (itemId == R.id.menu_delete) {
+                    showDeleteConfirmationDialog();
+                    return true;
+                } else if (itemId == R.id.menu_report) {
+                    showReportDialog();
+                    return true;
+                }
+                return false;
+            });
+
+            popup.show();
+        });
+    }
+
+    private boolean isPostOwnedByCurrentUser() {
+        // If we have the author ID, compare it with current user ID
+        if (postAuthorId != null && currentUserId != null) {
+            return postAuthorId.equals(currentUserId);
+        }
+
+        // Fallback: If we don't have author ID but we know the post was created by current user
+        // You might want to fetch this from Firestore if not available
+        return false;
+    }
+
+    private void showDeleteConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Post")
+                .setMessage("Are you sure you want to delete this post? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deletePost())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deletePost() {
+        if (postId == null || currentUserId == null) {
+            Toast.makeText(this, "Unable to delete post", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Delete the post document
+        db.collection("posts").document(postId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Post deleted successfully", Toast.LENGTH_SHORT).show();
+                    finish(); // Close this activity and return to previous screen
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("PostDetailActivity", "Error deleting post", e);
+                    Toast.makeText(this, "Failed to delete post", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void showReportDialog() {
+        String[] reportReasons = {
+                "Inappropriate content",
+                "Spam",
+                "Harassment",
+                "False information",
+                "Other"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("Report Post")
+                .setItems(reportReasons, (dialog, which) -> {
+                    String reason = reportReasons[which];
+                    submitReport(reason);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void submitReport(String reason) {
+        if (currentUserId == null) {
+            Toast.makeText(this, "Login required to report", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Map<String, Object> reportData = new HashMap<>();
+        reportData.put("postId", postId);
+        reportData.put("reportedBy", currentUserId);
+        reportData.put("reason", reason);
+        reportData.put("timestamp", FieldValue.serverTimestamp());
+        reportData.put("postAuthor", postAuthorId);
+
+        db.collection("reports")
+                .add(reportData)
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("PostDetailActivity", "Error submitting report", e);
+                    Toast.makeText(this, "Failed to submit report", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private String censorIfNeeded(String input) {
@@ -186,16 +303,12 @@ public class PostDetailActivity extends AppCompatActivity {
 
         for (String regex : bannedWords) {
             if (normalized.matches(".*" + regex + ".*")) {
-
                 return input.replaceAll(".", "*");
             }
         }
 
         return input;
     }
-
-
-
 
     private void loadVotes() {
         db.collection("posts").document(postId)
@@ -238,20 +351,17 @@ public class PostDetailActivity extends AppCompatActivity {
         }
 
         if (voteType.equals(currentUserVote)) {
-
             db.collection("posts").document(postId)
                     .collection("votes").document(currentUserId)
                     .delete()
                     .addOnSuccessListener(aVoid -> {
                         currentUserVote = null;
                         updateVoteUI(null);
-
                     })
                     .addOnFailureListener(e ->
                             Toast.makeText(this, "Failed to remove vote", Toast.LENGTH_SHORT).show()
                     );
         } else {
-
             Map<String, Object> voteData = new HashMap<>();
             voteData.put("type", voteType);
             voteData.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
@@ -262,14 +372,12 @@ public class PostDetailActivity extends AppCompatActivity {
                     .addOnSuccessListener(aVoid -> {
                         currentUserVote = voteType;
                         updateVoteUI(voteType);
-
                     })
                     .addOnFailureListener(e ->
                             Toast.makeText(this, "Failed to vote", Toast.LENGTH_SHORT).show()
                     );
         }
     }
-
 
     private void updateVoteUI(String userVote) {
         if ("upvote".equals(userVote)) {
@@ -437,7 +545,6 @@ class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentViewHold
     @NonNull
     @Override
     public CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_comment, parent, false);
         return new CommentViewHolder(view);
@@ -476,7 +583,6 @@ class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentViewHold
         } else if (days <= 5) {
             return days + " day" + (days == 1 ? "" : "s") + " ago";
         } else {
-
             java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
             return dateFormat.format(new java.util.Date(timestampMillis));
         }

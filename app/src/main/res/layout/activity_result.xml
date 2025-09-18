@@ -1,58 +1,171 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="16dp"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/headerDisclaimer"
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#FFF3CD"
-        android:text="@string/notice"
-        android:textSize="14sp"
-        android:textColor="#B00020"
-        android:padding="10dp"
-        android:gravity="center"
-        android:layout_marginBottom="16dp" />
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/edibility"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#FFF3CD"
-        android:text="@string/edibility"
-        android:textSize="12sp"
-        android:textColor="#000000"
-        android:padding="5dp"
-        android:gravity="right"
-        android:layout_gravity="right"
-        android:layout_marginBottom="5dp" />
+        <TextView
+            android:id="@+id/headerDisclaimer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFF3CD"
+            android:text="@string/notice"
+            android:textSize="14sp"
+            android:textColor="#B00020"
+            android:padding="10dp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
 
-    <ImageView
-        android:id="@+id/resultImage"
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:scaleType="centerCrop"/>
+        <TextView
+            android:id="@+id/edibility"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#FFF3CD"
+            android:text="@string/edibility"
+            android:textSize="12sp"
+            android:textColor="#000000"
+            android:padding="5dp"
+            android:gravity="right"
+            android:layout_gravity="right"
+            android:layout_marginBottom="5dp" />
 
-    <TextView
-        android:id="@+id/resultText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="20sp"
-        android:layout_marginTop="16dp"
-        android:text="@string/prediction_will_appear_here"/>
+        <ImageView
+            android:id="@+id/resultImage"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:scaleType="centerCrop"/>
 
-    <TextView
-        android:id="@+id/reminder"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#FFF3CD"
-        android:textSize="14sp"
-        android:textColor="#B00020"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:text="@string/remember"/>
+        <TextView
+            android:id="@+id/resultText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:layout_marginTop="16dp"
+            android:text="@string/prediction_will_appear_here"/>
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/mushroomIDText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="mushroom ID"/>
+
+        <TextView
+            android:id="@+id/mushroomEdibility"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="edibility"/>
+
+        <TextView
+            android:id="@+id/resultCommonNames"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Common Names"/>
+
+        <TextView
+            android:id="@+id/resultDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Description"/>
+
+        <TextView
+            android:id="@+id/resultHabitat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Habitat"/>
+
+        <TextView
+            android:id="@+id/resultCulinary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Culinary uses"/>
+
+        <TextView
+            android:id="@+id/resultMedicinal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Medicinal uses"/>
+
+        <TextView
+            android:id="@+id/resultFacts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Facts"/>
+
+        <TextView
+            android:id="@+id/resultToxicity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Toxicity"/>
+
+        <TextView
+            android:id="@+id/resultSymptoms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Onset Symptoms"/>
+
+        <TextView
+            android:id="@+id/resultDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Duration of Effects"/>
+
+        <TextView
+            android:id="@+id/resultLongTerm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:text="Long term Effects"/>
+
+        <TextView
+            android:id="@+id/reminder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFF3CD"
+            android:textSize="14sp"
+            android:textColor="#B00020"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="@string/remember"/>
+
+    </LinearLayout>
+</ScrollView>
