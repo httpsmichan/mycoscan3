@@ -9,8 +9,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="10dp">
+        android:orientation="vertical">
 
         <!-- Profile Header -->
         <LinearLayout
@@ -18,7 +17,11 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:background="@drawable/rounded_background">
+            android:background="@drawable/rounded_background"
+            android:padding="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp">
 
             <!-- Profile Picture -->
             <ImageView
@@ -31,23 +34,39 @@
                 android:layout_marginTop="16dp"
                 android:contentDescription="@string/profile_icon" />
 
-            <!-- User Name -->
-            <TextView
-                android:id="@+id/textUsername"
+            <!-- Username + Verified Badge -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Jane Doe"
-                android:layout_marginTop="16dp"
-                android:textSize="28sp"
-                android:textStyle="bold"
-                android:textColor="#1f2937" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp">
+
+                <TextView
+                    android:id="@+id/textUsername"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Jane Doe"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:textColor="#1f2937" />
+
+                <ImageView
+                    android:id="@+id/imageVerifiedBadge"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="8dp"
+                    android:src="@drawable/ic_verified_badge"
+                    android:visibility="gone"
+                    android:contentDescription="Verified Badge"/>
+            </LinearLayout>
 
             <!-- User Handle -->
             <TextView
                 android:id="@+id/textUserHandle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="janedoe"
+                android:text="@janedoe"
                 android:textSize="14sp"
                 android:textColor="#6b7280" />
 
@@ -145,7 +164,7 @@
                 android:id="@+id/btnFollow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="16dp"
                 android:paddingLeft="24dp"
                 android:paddingRight="24dp"
                 android:text="Follow"
@@ -154,44 +173,49 @@
                 android:backgroundTint="#2563eb"
                 android:textColor="@android:color/white" />
 
-            <!-- Tabs (About + Posts) -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/tab_button_group_background">
-
-                <Button
-                    android:id="@+id/btnAboutTab"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="About"
-                    android:textColor="#4b5563"
-                    android:background="@drawable/tab_selected_background"
-                    style="?android:attr/borderlessButtonStyle" />
-
-                <Button
-                    android:id="@+id/btnPostsTab"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Posts"
-                    android:textColor="#4b5563"
-                    android:background="@drawable/tab_unselected_background"
-                    style="?android:attr/borderlessButtonStyle" />
-            </LinearLayout>
         </LinearLayout>
 
-        <!-- About Tab Content (Other User View) -->
+        <!-- Tabs -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/tab_button_group_background"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/btnAboutTab"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="About"
+                android:textColor="#4b5563"
+                android:background="@drawable/tab_selected_background"
+                style="?android:attr/borderlessButtonStyle" />
+
+            <Button
+                android:id="@+id/btnPostsTab"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Posts"
+                android:textColor="#4b5563"
+                android:background="@drawable/tab_unselected_background"
+                style="?android:attr/borderlessButtonStyle" />
+        </LinearLayout>
+
+        <!-- About Content -->
         <LinearLayout
             android:id="@+id/layoutAboutContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="visible"
-            android:padding="10dp">
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp"
+            android:visibility="visible">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -212,19 +236,21 @@
                 android:lineSpacingExtra="4dp" />
         </LinearLayout>
 
-        <!-- Posts Tab Content -->
+        <!-- Posts Content -->
         <LinearLayout
             android:id="@+id/layoutPostsContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:layout_marginLeft="-10dp"
+            android:layout_marginRight="-10dp"
             android:visibility="gone">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerUserPosts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="2dp" />
+                android:padding="8dp" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

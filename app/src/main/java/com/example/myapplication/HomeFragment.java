@@ -61,7 +61,19 @@ public class HomeFragment extends Fragment {
     private SearchSuggestionAdapter suggestionAdapter;
     private final List<String> suggestionList = new ArrayList<>();
     private final List<String> mushroomTypesList = new ArrayList<>();
+    private final List<UserInfo> usersList = new ArrayList<>(); // Added for user search
     private LinearLayout tipCardsContainer;
+
+    // Helper class to store user information
+    private static class UserInfo {
+        String userId;
+        String username;
+
+        UserInfo(String userId, String username) {
+            this.userId = userId;
+            this.username = username;
+        }
+    }
 
     // Category + tips model
     private static class TipCategory {
@@ -126,6 +138,7 @@ public class HomeFragment extends Fragment {
                 suggestionList.clear();
                 boolean matchedCategory = false;
                 boolean matchedMushroomType = false;
+                boolean matchedUser = false;
 
                 if (!input.isEmpty()) {
                     // Search in categories
@@ -143,6 +156,14 @@ public class HomeFragment extends Fragment {
                         }
                         if (mushroomType.equalsIgnoreCase(input)) matchedMushroomType = true;
                     }
+
+                    // Search in users
+                    for (UserInfo user : usersList) {
+                        if (user.username.toLowerCase().contains(input.toLowerCase())) {
+                            suggestionList.add("User: " + user.username);
+                        }
+                        if (user.username.equalsIgnoreCase(input)) matchedUser = true;
+                    }
                 }
 
                 suggestionAdapter.notifyDataSetChanged();
@@ -155,6 +176,8 @@ public class HomeFragment extends Fragment {
                     filterPostsByCategory(input);
                 } else if (matchedMushroomType) {
                     filterPostsByMushroomType(input);
+                } else if (matchedUser) {
+                    filterPostsByUser(input);
                 }
             }
 
@@ -164,20 +187,24 @@ public class HomeFragment extends Fragment {
 
         // Click listener for suggestions
         suggestionAdapter.setOnItemClickListener(item -> {
-            searchEditText.setText(item);
-            searchSuggestionsRecycler.setVisibility(View.GONE);
-
-            if (item.startsWith("Category: ")) {
-                String category = item.replace("Category: ", "").trim();
-                filterPostsByCategory(category);
-            } else if (item.startsWith("Mushroom: ")) {
-                String mushroomType = item.replace("Mushroom: ", "").trim();
-                filterPostsByMushroomType(mushroomType);
+            if (item.startsWith("User: ")) {
+                String username = item.replace("User: ", "").trim();
+                redirectToUserProfile(username);
             } else {
-                loadAllPosts();
+                searchEditText.setText(item);
+                searchSuggestionsRecycler.setVisibility(View.GONE);
+
+                if (item.startsWith("Category: ")) {
+                    String category = item.replace("Category: ", "").trim();
+                    filterPostsByCategory(category);
+                } else if (item.startsWith("Mushroom: ")) {
+                    String mushroomType = item.replace("Mushroom: ", "").trim();
+                    filterPostsByMushroomType(mushroomType);
+                } else {
+                    loadAllPosts();
+                }
             }
         });
-
 
         // Card click listeners
         cardProperHarvesting.setOnClickListener(v -> startActivity(new Intent(requireContext(), HarvestingActivity.class)));
@@ -197,6 +224,7 @@ public class HomeFragment extends Fragment {
         checkUserTerms();
         loadAllPosts();
         loadMushroomTypes();
+        loadUsers(); // Load users for search suggestions
         loadProfilePhoto();
 
         fabReport = view.findViewById(R.id.fabReport);
@@ -213,6 +241,74 @@ public class HomeFragment extends Fragment {
         }
 
         return view;
+    }
+
+    // Method to load users for search suggestions
+    private void loadUsers() {
+        db.collection("users")
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    usersList.clear();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        String username = doc.getString("username");
+                        if (username != null && !username.isEmpty()) {
+                            usersList.add(new UserInfo(doc.getId(), username));
+                        }
+                    }
+                    Log.d("HomeFragment", "Loaded " + usersList.size() + " users");
+                })
+                .addOnFailureListener(e -> Log.e("HomeFragment", "Error loading users", e));
+    }
+
+    // Method to redirect to UserProfile activity
+    private void redirectToUserProfile(String username) {
+        // Find the user ID for this username
+        UserInfo targetUser = null;
+        for (UserInfo user : usersList) {
+            if (user.username.equals(username)) {
+                targetUser = user;
+                break;
+            }
+        }
+
+        if (targetUser != null) {
+            // Check if it's the current user
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null && targetUser.userId.equals(currentUser.getUid())) {
+                Toast.makeText(requireContext(), "This is your profile! Check the Profile tab.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Intent intent = new Intent(requireContext(), UserProfile.class);
+            intent.putExtra("visitedUserId", targetUser.userId);
+            intent.putExtra("visitedUsername", targetUser.username);
+            startActivity(intent);
+        } else {
+            Toast.makeText(requireContext(), "User not found", Toast.LENGTH_SHORT).show();
+        }
+
+        // Clear search and hide suggestions
+        searchEditText.setText("");
+        searchSuggestionsRecycler.setVisibility(View.GONE);
+    }
+
+    // Method to filter posts by user
+    private void filterPostsByUser(String username) {
+        db.collection("posts")
+                .whereEqualTo("username", username)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    postList.clear();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        Post post = doc.toObject(Post.class);
+                        post.setPostId(doc.getId());
+                        postList.add(post);
+                    }
+                    adapter.notifyDataSetChanged();
+                    Log.d("HomeFragment", "Filtered " + postList.size() + " posts by user: " + username);
+                })
+                .addOnFailureListener(e -> Log.e("HomeFragment", "Error filtering posts by user", e));
     }
 
     private void checkUserTerms() {
@@ -423,6 +519,7 @@ public class HomeFragment extends Fragment {
                         Log.e("HomeFragment", "Error filtering posts", e)
                 );
     }
+
     private void loadMushroomTypes() {
         db.collection("posts")
                 .get()

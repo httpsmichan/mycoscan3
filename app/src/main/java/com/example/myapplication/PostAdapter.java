@@ -169,8 +169,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             }
 
             popup.setOnMenuItemClickListener(item -> {
+                int pos = holder.getAdapterPosition();
+                if (pos == RecyclerView.NO_POSITION) return false;
+
                 if (item.getTitle().equals("Delete")) {
-                    deletePost(post.getPostId(), position);
+                    deletePost(post.getPostId(), pos);
                 } else if (item.getTitle().equals("Report")) {
                     reportPost(post.getPostId());
                 }
@@ -179,6 +182,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
             popup.show();
         });
+
     }
 
     @Override
