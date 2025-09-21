@@ -157,6 +157,8 @@ public class SignupActivity extends AppCompatActivity {
         user.put("fullName", fullName);
         user.put("email", email);
         user.put("createdAt", System.currentTimeMillis());
+        user.put("following", 0);
+        user.put("followers", 0);
 
         db.collection("users").document(userId)
                 .set(user)

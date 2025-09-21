@@ -7,34 +7,283 @@
     android:layout_height="match_parent"
     tools:context=".HomeFragment">
 
-    <!-- Daily Tip -->
-    <TextView
-        android:id="@+id/tipTextView"
+    <!-- Top search bar -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/searchContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:background="#EEEEEE"
-        android:textColor="#333333"
-        android:gravity="center_horizontal"
+        android:padding="10dp"
         android:elevation="4dp"
+        android:background="@drawable/shadow"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- Posts list -->
+        <!-- Notification Bell -->
+        <ImageView
+            android:id="@+id/notificationBell"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="6dp"
+            android:src="@android:drawable/ic_dialog_info"
+            android:contentDescription="Notifications"
+            android:background="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <!-- Search EditText -->
+        <EditText
+            android:id="@+id/searchEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Search mushrooms..."
+            android:textSize="14sp"
+            android:padding="6dp"
+            android:background="@drawable/search_background"
+            android:drawableStart="@android:drawable/ic_menu_search"
+            android:inputType="text"
+            app:layout_constraintStart_toEndOf="@id/notificationBell"
+            app:layout_constraintEnd_toStartOf="@id/iconsContainer"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Profile Icon -->
+        <LinearLayout
+            android:id="@+id/iconsContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageView
+                android:id="@+id/profileIcon"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:padding="5dp"
+                android:layout_marginLeft="10dp"
+                android:src="@android:drawable/ic_menu_myplaces"
+                android:contentDescription="Profile"
+                android:background="@color/white"/>
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Suggestions RecyclerView below search bar -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerPosts"
+        android:id="@+id/searchSuggestionsRecycler"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#CCFFFFFF"
+        android:visibility="gone"
+        android:elevation="8dp"
+        android:clipToPadding="false"
+        android:padding="8dp"
+        app:layout_constraintTop_toBottomOf="@id/searchContainer"
+        app:layout_constraintStart_toStartOf="@id/searchContainer"
+        app:layout_constraintEnd_toEndOf="@id/searchContainer"
+        android:layout_marginTop="2dp"
+        android:overScrollMode="never"/>
+
+    <!-- Scrollable content -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollableContent"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tipTextView"
+        app:layout_constraintTop_toBottomOf="@id/searchSuggestionsRecycler"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:fillViewport="true">
 
-    <!-- Floating Action Button (overlays posts, bottom-right with margin) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Tip + Cards container -->
+            <LinearLayout
+                android:id="@+id/tipCardsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Tip section -->
+                <LinearLayout
+                    android:id="@+id/linearLayout2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="15dp">
+
+                    <ImageView android:id="@+id/tip_ImageView"
+                        android:layout_width="match_parent"
+                        android:layout_height="150dp"
+                        android:adjustViewBounds="false"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/rounded_top_corners"
+                        android:clipToOutline="true"
+                        android:src="@drawable/my_image" />
+
+                    <TextView
+                        android:id="@+id/tipTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:padding="16dp"
+                        android:text="Fun fact! Mushroom cell walls contain chitin, the same material as insect shells."
+                        android:textColor="#333333"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/tab_button_group_background"/>
+                </LinearLayout>
+
+                <!-- Cards -->
+                <LinearLayout
+                    android:id="@+id/linearLayout3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="15dp"
+                    android:gravity="center">
+
+                    <!-- Proper Harvesting Card -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/card_proper_harvesting"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="10dp"
+                        app:cardCornerRadius="10dp"
+                        app:cardElevation="4dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="100dp"
+                                android:clipToOutline="true"
+                                android:background="@drawable/rounded_top_corners">
+
+                                <ImageView
+                                    android:id="@+id/proper_harvesting_image"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_launcher_background"
+                                    android:contentDescription="Proper Harvesting"/>
+                            </FrameLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="6dp">
+
+                                <TextView
+                                    android:id="@+id/proper_harvesting_title"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Proper Harvesting"
+                                    android:textStyle="bold"
+                                    android:textSize="16sp"
+                                    android:layout_marginTop="8dp"/>
+
+                                <TextView
+                                    android:id="@+id/proper_harvesting_description"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Read Article"
+                                    android:textSize="12sp"
+                                    android:layout_marginTop="4dp"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Identification Tips Card -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/card_identification_tips"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="10dp"
+                        app:cardCornerRadius="10dp"
+                        app:cardElevation="4dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="100dp"
+                                android:clipToOutline="true"
+                                android:background="@drawable/rounded_top_corners">
+
+                                <ImageView
+                                    android:id="@+id/identification_tips_image"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_launcher_background"
+                                    android:contentDescription="Identification Tips"/>
+                            </FrameLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="6dp">
+
+                                <TextView
+                                    android:id="@+id/identification_tips_title"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Identification Tips"
+                                    android:textStyle="bold"
+                                    android:textSize="16sp"
+                                    android:layout_marginTop="8dp"/>
+
+                                <TextView
+                                    android:id="@+id/identification_tips_description"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Read Article"
+                                    android:textSize="12sp"
+                                    android:layout_marginTop="4dp"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Posts header -->
+            <TextView
+                android:id="@+id/postsHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:text="Discoveries"
+                android:textColor="@android:color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <!-- Posts RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerPosts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:nestedScrollingEnabled="false"/>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Floating Action Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabReport"
         android:layout_width="wrap_content"

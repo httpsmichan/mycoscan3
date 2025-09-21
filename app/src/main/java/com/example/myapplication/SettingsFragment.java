@@ -139,6 +139,8 @@ public class SettingsFragment extends Fragment {
                         if (documentSnapshot.exists()) {
                             String fullName = documentSnapshot.getString("fullName");
                             String username = documentSnapshot.getString("username");
+                            Long followersCount = documentSnapshot.getLong("followers");
+                            Long followingCount = documentSnapshot.getLong("following");
 
                             if (fullName != null && !fullName.isEmpty()) {
                                 textUsername.setText(fullName);
@@ -150,6 +152,19 @@ public class SettingsFragment extends Fragment {
                                 textUserHandle.setText("@" + username);
                             } else {
                                 textUserHandle.setText("@unknown");
+                            }
+
+                            // ✅ Followers and Following
+                            if (followersCount != null) {
+                                textFollowers.setText(String.valueOf(followersCount));
+                            } else {
+                                textFollowers.setText("0");
+                            }
+
+                            if (followingCount != null) {
+                                textFollowing.setText(String.valueOf(followingCount));
+                            } else {
+                                textFollowing.setText("0");
                             }
 
                             // 🔑 Check applications collection for verification

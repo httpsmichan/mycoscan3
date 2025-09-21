@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#f3f4f6">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <!-- Profile Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:background="@drawable/rounded_background">
+
+            <!-- Profile Picture -->
+            <ImageView
+                android:id="@+id/imageProfile"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/ic_person_placeholder"
+                android:scaleType="centerCrop"
+                android:background="@drawable/circle_background"
+                android:layout_marginTop="16dp"
+                android:contentDescription="@string/profile_icon" />
+
+            <!-- User Name -->
+            <TextView
+                android:id="@+id/textUsername"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Jane Doe"
+                android:layout_marginTop="16dp"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#1f2937" />
+
+            <!-- User Handle -->
+            <TextView
+                android:id="@+id/textUserHandle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="janedoe"
+                android:textSize="14sp"
+                android:textColor="#6b7280" />
+
+            <!-- User Bio -->
+            <TextView
+                android:id="@+id/textUserBio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:text="Digital Creator and Designer. Sharing my journey and passion for art."
+                android:textColor="#4b5563"
+                android:textSize="14sp" />
+
+            <!-- Stats (Followers / Following / Posts) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="24dp">
+
+                <!-- Followers -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+                    <TextView
+                        android:id="@+id/textFollowers"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="12.5k"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#1f2937" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Followers"
+                        android:textSize="12sp"
+                        android:textColor="#6b7280" />
+                </LinearLayout>
+
+                <!-- Following -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+                    <TextView
+                        android:id="@+id/textFollowing"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="500"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#1f2937" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Following"
+                        android:textSize="12sp"
+                        android:textColor="#6b7280" />
+                </LinearLayout>
+
+                <!-- Posts -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+                    <TextView
+                        android:id="@+id/textPosts"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="75"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#1f2937" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Posts"
+                        android:textSize="12sp"
+                        android:textColor="#6b7280" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Follow / Unfollow Button -->
+            <Button
+                android:id="@+id/btnFollow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:text="Follow"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="#2563eb"
+                android:textColor="@android:color/white" />
+
+            <!-- Tabs (About + Posts) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/tab_button_group_background">
+
+                <Button
+                    android:id="@+id/btnAboutTab"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="About"
+                    android:textColor="#4b5563"
+                    android:background="@drawable/tab_selected_background"
+                    style="?android:attr/borderlessButtonStyle" />
+
+                <Button
+                    android:id="@+id/btnPostsTab"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Posts"
+                    android:textColor="#4b5563"
+                    android:background="@drawable/tab_unselected_background"
+                    style="?android:attr/borderlessButtonStyle" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- About Tab Content (Other User View) -->
+        <LinearLayout
+            android:id="@+id/layoutAboutContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible"
+            android:padding="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Achievements"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#1f2937"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/textAchievements"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🏆 Top 1% Designer\n🎖️ Hackathon Winner\n📜 Certified UI/UX Specialist"
+                android:textSize="14sp"
+                android:textColor="#4b5563"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
+
+        <!-- Posts Tab Content -->
+        <LinearLayout
+            android:id="@+id/layoutPostsContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerUserPosts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="2dp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

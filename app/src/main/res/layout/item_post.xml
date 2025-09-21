@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="12dp"
-    android:background="@android:color/white"
+    android:background="@drawable/top_image"
     android:layout_marginBottom="8dp"
     android:elevation="4dp">
 
