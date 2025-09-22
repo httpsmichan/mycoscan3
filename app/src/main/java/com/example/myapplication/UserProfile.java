@@ -48,6 +48,7 @@ public class UserProfile extends AppCompatActivity {
     private String currentUserId;  // the logged-in user
     private boolean isFollowing = false; // track state
     private UserPostsGridAdapter userPostsAdapter;
+    private ImageView imageVerifiedBadge;
     private final List<Post> userPostsList = new ArrayList<>();
 
     @Override
@@ -168,6 +169,7 @@ public class UserProfile extends AppCompatActivity {
         btnPostsTab = findViewById(R.id.btnPostsTab);
         layoutAboutContent = findViewById(R.id.layoutAboutContent);
         layoutPostsContent = findViewById(R.id.layoutPostsContent);
+        imageVerifiedBadge = findViewById(R.id.imageVerifiedBadge);
 
         // Hide follow button if viewing own profile
         if (visitedUserId != null && visitedUserId.equals(currentUserId)) {
@@ -270,6 +272,29 @@ public class UserProfile extends AppCompatActivity {
 
         tvFollowersCount.setText(String.valueOf(followers != null ? followers : 0));
         tvFollowingCount.setText(String.valueOf(following != null ? following : 0));
+
+        // 🔑 Check verification applications
+        db.collection("applications")
+                .whereEqualTo("userId", visitedUserId)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(query -> {
+                    if (!query.isEmpty()) {
+                        String status = query.getDocuments().get(0).getString("status");
+                        if ("approved".equalsIgnoreCase(status)) {
+                            imageVerifiedBadge.setVisibility(View.VISIBLE);
+                        } else {
+                            imageVerifiedBadge.setVisibility(View.GONE);
+                        }
+                    } else {
+                        imageVerifiedBadge.setVisibility(View.GONE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("UserProfile", "Error checking verification status", e);
+                    imageVerifiedBadge.setVisibility(View.GONE);
+                });
+
     }
 
     private void checkFollowStatus() {

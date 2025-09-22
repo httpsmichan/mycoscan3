@@ -14,13 +14,18 @@ public class TFLiteHelper {
 
     public TFLiteHelper(Context context) {
         try {
+            Log.d("TFLiteHelper", "Attempting to load model...");
             tflite = new Interpreter(FileUtil.loadMappedFile(context, "model_unquant.tflite"));
+            Log.d("TFLiteHelper", "Model loaded successfully!");
+
             labels = FileUtil.loadLabels(context, "labels.txt");
             if (labels == null || labels.isEmpty()) {
-                Log.e("TFLiteHelper", "Labels are null or empty! Check labels.txt");
+                Log.e("TFLiteHelper", "❌ Labels are null or empty! Check labels.txt");
+            } else {
+                Log.d("TFLiteHelper", "✅ Labels loaded: " + labels.size() + " classes");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("TFLiteHelper", "❌ Failed to load model or labels", e);
         }
     }
 

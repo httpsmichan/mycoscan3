@@ -66,6 +66,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private String currentUserId;
     private String currentUserVote = null;
     private TextView tvUpvotes, tvDownvotes;
+
     private List<String> bannedWords = new ArrayList<>();
 
     private void loadBannedWords() {
@@ -145,7 +146,7 @@ public class PostDetailActivity extends AppCompatActivity {
         String description = intent.getStringExtra("description");
         username = intent.getStringExtra("username");
         postId = intent.getStringExtra("postId");
-        postAuthorId = intent.getStringExtra("userId"); // Make sure to pass this from previous activity
+        postAuthorId = intent.getStringExtra("userId");
         latitude = intent.getDoubleExtra("latitude", 0.0);
         longitude = intent.getDoubleExtra("longitude", 0.0);
 
@@ -165,14 +166,70 @@ public class PostDetailActivity extends AppCompatActivity {
         tvUpvotes = findViewById(R.id.tvUpvotes);
         tvDownvotes = findViewById(R.id.tvDownvotes);
         ivMenuOptions = findViewById(R.id.ivMenuOptions);
+        TextView tvCategory = findViewById(R.id.tvCategory);
+        TextView tvLocation = findViewById(R.id.tvLocation);
+        TextView tvTimestamp = findViewById(R.id.tvTimestamp);
+        TextView tvVerified = findViewById(R.id.tvVerified);
 
         tvDetailType.setText(mushroomType != null ? mushroomType : "Unknown Type");
         tvDetailDesc.setText(description != null ? description : "No description available");
-        tvDetailUser.setText("Posted by: " + (username != null ? username : "Unknown"));
+        tvDetailUser.setText((username != null ? username : "Unknown"));
 
         if (imageUrl != null && !imageUrl.isEmpty()) {
             Glide.with(this).load(imageUrl).into(ivDetailImage);
         }
+
+        // 🔹 Fetch post details from Firestore
+        db.collection("posts").document(postId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Category
+                        String category = documentSnapshot.getString("category");
+                        tvCategory.setText("Category: " + (category != null ? category : "Uncategorized"));
+
+                        // Location
+                        String location = documentSnapshot.getString("location");
+                        tvLocation.setText((location != null ? location : "Unknown"));
+
+                        // Timestamp
+                        Object rawTimestamp = documentSnapshot.get("timestamp");
+                        if (rawTimestamp instanceof com.google.firebase.Timestamp) {
+                            long millis = ((com.google.firebase.Timestamp) rawTimestamp).toDate().getTime();
+                            String formattedDate = new java.text.SimpleDateFormat(
+                                    "MMM dd, yyyy HH:mm", java.util.Locale.getDefault()
+                            ).format(new java.util.Date(millis));
+                            tvTimestamp.setText(formattedDate);
+                        } else if (rawTimestamp instanceof Long) {
+                            // Firestore stored as epoch millis
+                            String formattedDate = new java.text.SimpleDateFormat(
+                                    "MMM dd, yyyy HH:mm", java.util.Locale.getDefault()
+                            ).format(new java.util.Date((Long) rawTimestamp));
+                            tvTimestamp.setText(formattedDate);
+                        } else {
+                            tvTimestamp.setText("Posted on: Unknown");
+                        }
+
+                        // Verified status
+                        String verified = documentSnapshot.getString("verified");
+                        if (verified == null || verified.isEmpty()) {
+                            verified = "Pending review";
+                        }
+                        tvVerified.setText(verified);
+
+                        // Optional color coding
+                        if ("Verified".equalsIgnoreCase(verified)) {
+                            tvVerified.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                        } else if ("Rejected".equalsIgnoreCase(verified)) {
+                            tvVerified.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                        } else {
+                            tvVerified.setTextColor(getResources().getColor(android.R.color.darker_gray));
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("PostDetailActivity", "Error fetching post details", e);
+                    Toast.makeText(this, "Failed to load post details", Toast.LENGTH_SHORT).show();
+                });
 
         loadBannedWords();
         loadVotes();

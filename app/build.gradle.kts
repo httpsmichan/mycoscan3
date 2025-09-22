@@ -91,3 +91,7 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.glide.okhttp3)
 }
+
+configurations.all {
+    exclude(group = "com.google.ai.edge.litert", module = "litert-api")
+}

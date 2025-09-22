@@ -141,6 +141,7 @@ public class SettingsFragment extends Fragment {
                             String username = documentSnapshot.getString("username");
                             Long followersCount = documentSnapshot.getLong("followers");
                             Long followingCount = documentSnapshot.getLong("following");
+                            String bio = documentSnapshot.getString("bio");
 
                             if (fullName != null && !fullName.isEmpty()) {
                                 textUsername.setText(fullName);
@@ -165,6 +166,12 @@ public class SettingsFragment extends Fragment {
                                 textFollowing.setText(String.valueOf(followingCount));
                             } else {
                                 textFollowing.setText("0");
+                            }
+
+                            if (bio != null && !bio.isEmpty()) {
+                                textUserBio.setText(bio);
+                            } else {
+                                textUserBio.setText("No bio yet.");
                             }
 
                             // 🔑 Check applications collection for verification

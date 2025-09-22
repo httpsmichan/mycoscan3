@@ -13,31 +13,58 @@
             android:id="@+id/etUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Username"/>
+            android:hint="Username" />
 
         <EditText
             android:id="@+id/etFullName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Full Name"/>
+            android:hint="Full Name" />
 
         <EditText
             android:id="@+id/etAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Address"/>
+            android:hint="Address" />
 
         <EditText
             android:id="@+id/etMobile"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Mobile Number"/>
+            android:hint="Mobile Number" />
 
         <EditText
             android:id="@+id/etSocial"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Social Media Link"/>
+            android:hint="Social Media Link" />
+
+        <!-- 🔹 Bio -->
+        <EditText
+            android:id="@+id/etBio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Bio"
+            android:inputType="textMultiLine"
+            android:lines="3"
+            android:gravity="top"
+            android:scrollbars="vertical" />
+
+        <!-- 🔹 Achievements (read-only TextView) -->
+        <TextView
+            android:id="@+id/tvAchievementsLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Achievements"
+            android:textStyle="bold"
+            android:paddingTop="16dp" />
+
+        <TextView
+            android:id="@+id/tvAchievements"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No achievements achieved yet."
+            android:paddingTop="4dp" />
 
     </LinearLayout>
 </ScrollView>

@@ -143,11 +143,15 @@ public class Verification extends AppCompatActivity {
                             textAlreadySubmitted.setText("You are verified");
                             textAlreadySubmitted.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
 
-                            // ✅ Update user's verified flag
+                            // ✅ Update user profile: verified flag
                             db.collection("users")
                                     .document(currentUser.getUid())
                                     .update("verified", true);
 
+                            // ✅ Add achievement "verified expert"
+                            db.collection("users")
+                                    .document(currentUser.getUid())
+                                    .update("achievements", com.google.firebase.firestore.FieldValue.arrayUnion("Verified Mushroom Expert"));
 
                         } else {
                             textAlreadySubmitted.setText("You have already submitted your application. Please wait for admin’s approval. We will notify you via email.");
