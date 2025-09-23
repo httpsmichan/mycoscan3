@@ -1,70 +1,191 @@
-<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:background="@color/BG"
+    android:padding="15dp">
 
     <LinearLayout
+        android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:showDividers="middle"
+        android:dividerPadding="12dp"
+        android:background="@color/BG">
 
-        <EditText
-            android:id="@+id/etUsername"
+        <!-- Profile Image -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Username" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="20dp">
 
-        <EditText
-            android:id="@+id/etFullName"
+            <ImageView
+                android:id="@+id/ivProfileImage"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
+                android:src="@drawable/circle_background"
+                android:scaleType="centerCrop"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/circle_background"
+                android:contentDescription="Profile Picture"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnChangePhoto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CHANGE PHOTO"
+                android:textSize="10sp"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_smallbtns"
+                android:layout_marginTop="10dp"
+                android:padding="10dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"/>
+        </LinearLayout>
+
+        <!-- Username -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Full Name" />
+            card_view:cardCornerRadius="12dp"
+            card_view:cardElevation="1dp"
+            android:layout_marginBottom="10dp"
+            card_view:cardBackgroundColor="@android:color/white">
 
-        <EditText
-            android:id="@+id/etAddress"
+            <EditText
+                android:id="@+id/etUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:padding="12dp"
+                android:hint="Username"
+                android:textSize="12sp"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Full Name -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Address" />
+            card_view:cardCornerRadius="12dp"
+            card_view:cardElevation="1dp"
+            android:layout_marginBottom="10dp"
+            card_view:cardBackgroundColor="@android:color/white">
 
-        <EditText
-            android:id="@+id/etMobile"
+            <EditText
+                android:id="@+id/etFullName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:padding="12dp"
+                android:hint="Full Name"
+                android:textSize="12sp"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Bio -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Mobile Number" />
+            card_view:cardCornerRadius="12dp"
+            card_view:cardElevation="1dp"
+            android:layout_marginBottom="10dp"
+            card_view:cardBackgroundColor="@android:color/white">
 
-        <EditText
-            android:id="@+id/etSocial"
+            <EditText
+                android:id="@+id/etBio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:padding="12dp"
+                android:hint="Bio"
+                android:inputType="textMultiLine"
+                android:lines="3"
+                android:gravity="top"
+                android:scrollbars="vertical"
+                android:textSize="12sp"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Location -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Social Media Link" />
+            card_view:cardCornerRadius="12dp"
+            card_view:cardElevation="1dp"
+            android:layout_marginBottom="10dp"
+            card_view:cardBackgroundColor="@android:color/white">
 
-        <!-- 🔹 Bio -->
-        <EditText
-            android:id="@+id/etBio"
+            <EditText
+                android:id="@+id/etLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:padding="12dp"
+                android:hint="Location"
+                android:textSize="12sp"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Websites container remains unchanged -->
+        <LinearLayout
+            android:id="@+id/llWebsitesContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Bio"
-            android:inputType="textMultiLine"
-            android:lines="3"
-            android:gravity="top"
-            android:scrollbars="vertical" />
+            android:orientation="vertical"
+            android:layout_marginBottom="10dp"/>
 
-        <!-- 🔹 Achievements (read-only TextView) -->
+        <!-- Save Changes Button -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnAddWebsite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_smallbtns"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="10dp"
+            android:text="+ Add Socials"
+            android:textColor="@android:color/white"
+            android:textSize="10sp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSaveAll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_button"
+            android:text="Save Changes"
+            android:textSize="13sp"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="10dp"/>
+
+        <!-- Achievements -->
         <TextView
             android:id="@+id/tvAchievementsLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Achievements"
             android:textStyle="bold"
-            android:paddingTop="16dp" />
+            android:textSize="12sp"
+            android:paddingTop="16dp"
+            android:layout_marginBottom="6dp"/>
 
-        <TextView
-            android:id="@+id/tvAchievements"
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="No achievements achieved yet."
-            android:paddingTop="4dp" />
+            card_view:cardCornerRadius="12dp"
+            card_view:cardElevation="1dp"
+            android:layout_marginBottom="10dp"
+            card_view:cardBackgroundColor="@android:color/white">
+
+            <TextView
+                android:id="@+id/tvAchievements"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="No achievements achieved yet."
+                android:textSize="12sp"/>
+        </androidx.cardview.widget.CardView>
 
     </LinearLayout>
 </ScrollView>

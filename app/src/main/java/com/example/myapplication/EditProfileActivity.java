@@ -1,21 +1,27 @@
 package com.example.myapplication;
 
-import android.graphics.Typeface;
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
+import android.view.MotionEvent;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 
+import com.bumptech.glide.Glide;
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.android.callback.UploadCallback;
+import com.cloudinary.android.callback.ErrorInfo;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -25,283 +31,223 @@ import java.util.Map;
 
 public class EditProfileActivity extends AppCompatActivity {
 
-    private FirebaseFirestore db;
-    private String userId;
-    private String currentUserEmail;
-    private FirebaseUser currentUser;
+    private static final int PICK_IMAGE_REQUEST = 1001;
 
-    private LinearLayout container; // parent layout
-    private LinearLayout achievementsContainer; // container for achievements
-    private EditText etBio; // bio field
-    private Button btnAddAchievement;
+    private FirebaseFirestore db;
+    private FirebaseUser currentUser;
+    private String userId;
+
+    private EditText etUsername, etFullName, etBio, etLocation;
+    private TextView tvAchievements;
+    private ImageView ivProfileImage;
+    private AppCompatButton btnChangePhoto, btnAddWebsite, btnSaveAll;
+    private LinearLayout llWebsitesContainer;
+
+    private String oldProfileUrl;
+    private Uri imageUri;
+    private Map<String, String> originalData = new HashMap<>();
+    private List<String> originalSocials = new ArrayList<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        container = new LinearLayout(this);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(40, 40, 40, 40);
-        setContentView(container);
+        setContentView(R.layout.activity_edit_profile);
 
         db = FirebaseFirestore.getInstance();
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) finish();
         userId = currentUser.getUid();
-        currentUserEmail = currentUser != null ? currentUser.getEmail() : "anonymous";
 
-        // Load existing data
-        DocumentReference docRef = db.collection("users").document(userId);
-        docRef.get().addOnSuccessListener(document -> {
-            if (document.exists()) {
-                addEditableRow("username", document.getString("username"));
-                addEditableRow("fullName", document.getString("fullName"));
-                addReadOnlyRow("email", document.getString("email")); // 🔹 email is display only
-                addEditableRow("address", document.getString("address"));
-                addEditableRow("mobile", document.getString("mobile"));
-                addEditableRow("social", document.getString("social"));
+        etUsername = findViewById(R.id.etUsername);
+        etFullName = findViewById(R.id.etFullName);
+        etBio = findViewById(R.id.etBio);
+        etLocation = findViewById(R.id.etLocation);
+        tvAchievements = findViewById(R.id.tvAchievements);
+        ivProfileImage = findViewById(R.id.ivProfileImage);
+        btnChangePhoto = findViewById(R.id.btnChangePhoto);
+        llWebsitesContainer = findViewById(R.id.llWebsitesContainer);
+        btnAddWebsite = findViewById(R.id.btnAddWebsite);
+        btnSaveAll = findViewById(R.id.btnSaveAll);
 
-                // 🔹 Add Bio
-                addBioField(document.getString("bio"));
+        loadUserData();
 
-                // 🔹 Add Achievements
-                List<String> achievements = (List<String>) document.get("achievements");
-                addAchievementsSection(achievements);
+        setupEditOnTouch(etUsername);
+        setupEditOnTouch(etFullName);
+        setupEditOnTouch(etBio);
+        setupEditOnTouch(etLocation);
+
+        btnAddWebsite.setOnClickListener(v -> addSocialField(null));
+        btnSaveAll.setOnClickListener(v -> saveChanges());
+
+        btnChangePhoto.setOnClickListener(v -> openFileChooser());
+    }
+
+    private void loadUserData() {
+        db.collection("users").document(userId).get().addOnSuccessListener(document -> {
+            if (!document.exists()) return;
+
+            // Load old profile photo
+            oldProfileUrl = document.getString("profilePhoto");
+            if (oldProfileUrl != null && !oldProfileUrl.isEmpty()) {
+                Glide.with(this).load(oldProfileUrl).circleCrop().into(ivProfileImage);
+            }
+
+            etUsername.setText(document.getString("username"));
+            etFullName.setText(document.getString("fullName"));
+            etBio.setText(document.getString("bio"));
+            etLocation.setText(document.getString("location"));
+
+            originalData.put("username", etUsername.getText().toString());
+            originalData.put("fullName", etFullName.getText().toString());
+            originalData.put("bio", etBio.getText().toString());
+            originalData.put("location", etLocation.getText().toString());
+
+            List<String> socials = (List<String>) document.get("socials");
+            if (socials != null && !socials.isEmpty()) {
+                for (String s : socials) addSocialField(s);
+                originalSocials = new ArrayList<>(socials);
+            } else {
+                addSocialField(null);
+                originalSocials = new ArrayList<>();
+            }
+
+            List<String> achievements = (List<String>) document.get("achievements");
+            if (achievements != null && !achievements.isEmpty()) {
+                tvAchievements.setText("• " + String.join("\n• ", achievements));
+            } else {
+                tvAchievements.setText("No achievements achieved yet.");
             }
         });
     }
 
-    /**
-     * Bio field (single EditText with save button)
-     */
-    private void addBioField(String value) {
-        EditableRow row = new EditableRow("bio", value);
-        container.addView(row);
-        this.etBio = row.getEditText();
+    @SuppressLint("ClickableViewAccessibility")
+    private void setupEditOnTouch(EditText editText) {
+        editText.setFocusable(false);
+        editText.setFocusableInTouchMode(false);
+        editText.setCursorVisible(false);
+        editText.setClickable(true);
+
+        editText.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                editText.setFocusableInTouchMode(true);
+                editText.setFocusable(true);
+                editText.setCursorVisible(true);
+                editText.requestFocus();
+            }
+            return false;
+        });
     }
 
-    /**
-     * Achievements section (dynamic list of EditTexts with + and - buttons)
-     */
-    /**
-     * Achievements section (read-only text list)
-     */
-    private void addAchievementsSection(List<String> achievements) {
-        achievementsContainer = new LinearLayout(this);
-        achievementsContainer.setOrientation(LinearLayout.VERTICAL);
-
-        // Section label
-        TextView label = new TextView(this);
-        label.setText("Achievements");
-        label.setTextSize(16);
-        label.setPadding(0, 20, 0, 10);
-        label.setTypeface(null, Typeface.BOLD);
-        achievementsContainer.addView(label);
-
-        if (achievements != null && !achievements.isEmpty()) {
-            for (String ach : achievements) {
-                TextView achView = new TextView(this);
-                achView.setText("• " + ach);
-                achView.setPadding(10, 5, 0, 5);
-                achievementsContainer.addView(achView);
+    @SuppressLint("ClickableViewAccessibility")
+    private void addSocialField(String url) {
+        LinearLayout rowLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.item_social, llWebsitesContainer, false);
+        EditText etSocial = rowLayout.findViewById(R.id.etSocial);
+        etSocial.setText(url != null ? url : "");
+        etSocial.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                etSocial.setFocusableInTouchMode(true);
+                etSocial.setFocusable(true);
+                etSocial.setCursorVisible(true);
+                etSocial.requestFocus();
             }
+            return false;
+        });
+        ImageButton btnRemove = rowLayout.findViewById(R.id.btnRemove);
+        btnRemove.setOnClickListener(v -> llWebsitesContainer.removeView(rowLayout));
+        llWebsitesContainer.addView(rowLayout);
+    }
+
+    private void saveChanges() {
+        Map<String, Object> updates = new HashMap<>();
+        checkAndPutUpdate("username", etUsername.getText().toString(), updates);
+        checkAndPutUpdate("fullName", etFullName.getText().toString(), updates);
+        checkAndPutUpdate("bio", etBio.getText().toString(), updates);
+        checkAndPutUpdate("location", etLocation.getText().toString(), updates);
+
+        List<String> socialsList = new ArrayList<>();
+        for (int i = 0; i < llWebsitesContainer.getChildCount(); i++) {
+            LinearLayout rowLayout = (LinearLayout) llWebsitesContainer.getChildAt(i);
+            EditText et = rowLayout.findViewById(R.id.etSocial);
+            String url = et.getText().toString().trim();
+            if (!url.isEmpty()) socialsList.add(url);
+        }
+        if (!socialsList.equals(originalSocials)) updates.put("socials", socialsList);
+
+        if (!updates.isEmpty()) {
+            db.collection("users").document(userId)
+                    .update(updates)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show();
+                        originalData.put("username", etUsername.getText().toString());
+                        originalData.put("fullName", etFullName.getText().toString());
+                        originalData.put("bio", etBio.getText().toString());
+                        originalData.put("location", etLocation.getText().toString());
+                        originalSocials = new ArrayList<>(socialsList);
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(this, "Failed to update profile", Toast.LENGTH_SHORT).show());
         } else {
-            TextView noneView = new TextView(this);
-            noneView.setText("No achievements yet.");
-            noneView.setPadding(10, 5, 0, 5);
-            achievementsContainer.addView(noneView);
+            Toast.makeText(this, "No changes to save", Toast.LENGTH_SHORT).show();
         }
-
-        container.addView(achievementsContainer);
     }
 
-    /**
-     * Add one achievement row
-     */
-    private void addAchievementField(String value) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-
-        EditText et = new EditText(this);
-        et.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        et.setHint("Achievement");
-        if (value != null) et.setText(value);
-
-        Button btnRemove = new Button(this);
-        btnRemove.setText("-");
-        btnRemove.setOnClickListener(v -> achievementsContainer.removeView(row));
-
-        row.addView(et);
-        row.addView(btnRemove);
-
-        // Insert before the "+ Add Achievement" button
-        achievementsContainer.addView(row, achievementsContainer.getChildCount() - 2);
+    private void checkAndPutUpdate(String key, String newValue, Map<String, Object> updates) {
+        String original = originalData.get(key);
+        if (original == null || !original.equals(newValue)) updates.put(key, newValue);
     }
 
-    /**
-     * Save all achievements to Firestore
-     */
-    private void saveAchievements() {
-        List<String> achievements = new ArrayList<>();
+    // ---------- Cloudinary Profile Photo ----------
 
-        // skip label (index 0), loop through achievement rows
-        for (int i = 1; i < achievementsContainer.getChildCount() - 2; i++) {
-            View row = achievementsContainer.getChildAt(i);
-            if (row instanceof LinearLayout) {
-                EditText et = (EditText) ((LinearLayout) row).getChildAt(0);
-                String text = et.getText().toString().trim();
-                if (!text.isEmpty()) {
-                    achievements.add(text);
-                }
-            }
+    private void openFileChooser() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select Profile Photo"), PICK_IMAGE_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            imageUri = data.getData();
+            ivProfileImage.setImageURI(imageUri); // preview immediately
+            uploadProfilePhoto();
         }
-
-        Map<String, Object> update = new HashMap<>();
-        update.put("achievements", achievements);
-
-        db.collection("users").document(userId)
-                .update(update)
-                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Achievements updated!", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(this, "Failed to update achievements", Toast.LENGTH_SHORT).show());
     }
 
-    /**
-     * Helper to safely set text and hint
-     */
-    private void setSafeText(EditText editText, String value, String fieldName) {
-        if (value != null && !value.trim().isEmpty()) {
-            editText.setText(value);
-        } else {
-            editText.setText(""); // leave empty → hint shows
-        }
-        editText.setHint(prettyLabel(fieldName));
-    }
+    private void uploadProfilePhoto() {
+        if (imageUri == null) return;
 
-    /**
-     * Convert "fullName" → "Full Name", "mobile" → "Mobile"
-     */
-    private String prettyLabel(String fieldName) {
-        if (fieldName == null || fieldName.isEmpty()) return "";
-        StringBuilder label = new StringBuilder();
-        for (int i = 0; i < fieldName.length(); i++) {
-            char c = fieldName.charAt(i);
-            if (i == 0) {
-                label.append(Character.toUpperCase(c));
-            } else if (Character.isUpperCase(c)) {
-                label.append(" ").append(c);
-            } else {
-                label.append(c);
-            }
-        }
-        return label.toString();
-    }
+        MediaManager.get().upload(imageUri)
+                .option("folder", "profile_photos")
+                .callback(new UploadCallback() {
+                    @Override public void onStart(String requestId) {}
+                    @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
+                    @Override
+                    public void onSuccess(String requestId, Map resultData) {
+                        String newUrl = (String) resultData.get("secure_url");
 
-    /**
-     * Editable row (text + button)
-     */
-    private void addEditableRow(String fieldName, String currentValue) {
-        EditableRow row = new EditableRow(fieldName, currentValue);
-        container.addView(row);
-    }
+                        db.collection("users").document(userId)
+                                .update("profilePhoto", newUrl)
+                                .addOnSuccessListener(aVoid -> {
+                                    Glide.with(EditProfileActivity.this).load(newUrl).circleCrop().into(ivProfileImage);
+                                    Toast.makeText(EditProfileActivity.this, "Profile photo updated!", Toast.LENGTH_SHORT).show();
 
-    /**
-     * Read-only row (text only, no button)
-     */
-    private void addReadOnlyRow(String fieldName, String value) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-
-        EditText editText = new EditText(this);
-        setSafeText(editText, value, fieldName);
-        editText.setEnabled(false);
-        editText.setLayoutParams(new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1
-        ));
-        row.addView(editText);
-
-        container.addView(row);
-    }
-
-    /**
-     * Inner class representing one editable field row
-     */
-    private class EditableRow extends LinearLayout {
-        private EditText editText;
-        private Button btnToggle;
-        private boolean isEditing = false;
-
-        public EditableRow(String fieldName, String value) {
-            super(EditProfileActivity.this);
-            setOrientation(HORIZONTAL);
-
-            // EditText
-            editText = new EditText(EditProfileActivity.this);
-            setSafeText(editText, value, fieldName);
-            editText.setEnabled(false);
-            editText.setLayoutParams(new LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-            addView(editText);
-
-            // Button
-            btnToggle = new Button(EditProfileActivity.this);
-            btnToggle.setText("Edit");
-            addView(btnToggle);
-
-            // Toggle logic
-            btnToggle.setOnClickListener(v -> {
-                if (!isEditing) {
-                    editText.setEnabled(true);
-                    editText.requestFocus();
-                    btnToggle.setText("Save");
-                    isEditing = true;
-                } else {
-                    String newValue = editText.getText().toString().trim();
-                    if (newValue.isEmpty()) {
-                        Toast.makeText(EditProfileActivity.this,
-                                "Field cannot be empty", Toast.LENGTH_SHORT).show();
-                        return;
+                                    // Save new URL; deletion of old image should be handled server-side
+                                    oldProfileUrl = newUrl;
+                                });
                     }
+                    @Override public void onError(String requestId, ErrorInfo error) {
+                        Toast.makeText(EditProfileActivity.this, "Upload failed: " + error.getDescription(), Toast.LENGTH_SHORT).show();
+                    }
+                    @Override public void onReschedule(String requestId, ErrorInfo error) {}
+                })
+                .dispatch();
 
-                    // Firestore update for normal fields
-                    Map<String, Object> update = new HashMap<>();
-                    update.put(fieldName, newValue);
+    }
 
-                    db.collection("users").document(userId)
-                            .update(update)
-                            .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(EditProfileActivity.this,
-                                        prettyLabel(fieldName) + " updated!", Toast.LENGTH_SHORT).show();
-
-                                logChange(fieldName, newValue);
-
-                                editText.setEnabled(false);
-                                btnToggle.setText("Edit");
-                                isEditing = false;
-                            })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(EditProfileActivity.this,
-                                            "Failed to update " + prettyLabel(fieldName),
-                                            Toast.LENGTH_SHORT).show());
-                }
-            });
-        }
-
-        public EditText getEditText() {
-            return editText;
-        }
-
-        /**
-         * Log changes to Firestore logs
-         */
-        private void logChange(String fieldName, String newValue) {
-            Map<String, Object> log = new HashMap<>();
-            log.put("username", currentUserEmail);
-            log.put("datestamp", System.currentTimeMillis());
-            log.put("change", prettyLabel(fieldName) + " updated to: " + newValue);
-
-            FirebaseFirestore.getInstance()
-                    .collection("logs")
-                    .add(log);
-        }
-
-
+    private String getPublicIdFromUrl(String url) {
+        int index = url.lastIndexOf("/upload/");
+        int dotIndex = url.lastIndexOf('.');
+        return url.substring(index + 8, dotIndex);
     }
 }

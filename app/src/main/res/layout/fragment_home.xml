@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
+    android:background="@color/BG"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".HomeFragment">
@@ -112,6 +113,7 @@
                 <!-- Tip section -->
                 <LinearLayout
                     android:id="@+id/linearLayout2"
+                    android:background="@color/BG"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -142,6 +144,7 @@
                 <!-- Cards -->
                 <LinearLayout
                     android:id="@+id/linearLayout3"
+                    android:background="@color/BG"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
