@@ -29,15 +29,15 @@ public class TFLiteHelper {
         }
     }
 
-    public String classify(Bitmap bitmap) {
+    public ClassificationResult classify(Bitmap bitmap) {
         if (tflite == null) {
             Log.e("TFLiteHelper", "TFLite interpreter is null!");
-            return "Error: model not loaded";
+            return new ClassificationResult("Error: model not loaded", 0f);
         }
 
         if (labels == null || labels.isEmpty()) {
             Log.e("TFLiteHelper", "Labels are null or empty!");
-            return "Error: labels not loaded";
+            return new ClassificationResult("Error: labels not loaded", 0f);
         }
 
         Bitmap resized = Bitmap.createScaledBitmap(bitmap, 224, 224, true);
@@ -60,6 +60,11 @@ public class TFLiteHelper {
             if (output[0][i] > output[0][maxIndex]) maxIndex = i;
         }
 
-        return labels.get(maxIndex);
+        String bestLabel = labels.get(maxIndex);
+        float confidence = output[0][maxIndex];
+
+        Log.d("TFLiteHelper", "Prediction: " + bestLabel + " (confidence: " + confidence + ")");
+
+        return new ClassificationResult(bestLabel, confidence);
     }
 }

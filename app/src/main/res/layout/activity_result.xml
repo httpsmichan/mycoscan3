@@ -10,6 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!-- Header Disclaimer -->
         <TextView
             android:id="@+id/headerDisclaimer"
             android:layout_width="match_parent"
@@ -22,6 +23,7 @@
             android:gravity="center"
             android:layout_marginBottom="16dp" />
 
+        <!-- Edibility -->
         <TextView
             android:id="@+id/edibility"
             android:layout_width="wrap_content"
@@ -35,128 +37,551 @@
             android:layout_gravity="right"
             android:layout_marginBottom="5dp" />
 
+        <!-- Result Image -->
         <ImageView
             android:id="@+id/resultImage"
             android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:scaleType="centerCrop"/>
+            android:layout_height="200dp"
+            android:adjustViewBounds="false"
+            android:scaleType="centerCrop"
+            android:background="@drawable/bg_image_borders"
+            android:clipToOutline="true"
+            android:src="@drawable/my_image"/>
 
-        <TextView
-            android:id="@+id/resultText"
-            android:layout_width="wrap_content"
+        <!-- Mushroom Info Container -->
+        <LinearLayout
+            android:id="@+id/mushroomInfoContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
+            android:orientation="vertical"
+            android:padding="12dp"
             android:layout_marginTop="16dp"
-            android:text="@string/prediction_will_appear_here"/>
+            android:background="@drawable/bg_edittext">
+
+            <!-- Mushroom Name -->
+            <TextView
+                android:id="@+id/mushroomNameText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="@color/black"
+                android:text="Mushroom Name" />
+
+            <!-- Common Names (no label) -->
+            <TextView
+                android:id="@+id/mushroomCommonNamesText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="14sp"
+                android:textColor="@color/black"
+                android:text="Common names here" />
+
+            <!-- Accuracy Bar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ProgressBar
+                    android:id="@+id/mushroomAccuracyBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="0dp"
+                    android:layout_height="20dp"
+                    android:layout_weight="1"
+                    android:progress="0"
+                    android:max="100"
+                    android:progressTint="@color/black"/>
+
+                <TextView
+                    android:id="@+id/mushroomAccuracyText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="0%"
+                    android:textSize="14sp"
+                    android:textColor="@color/black"/>
+            </LinearLayout>
+        </LinearLayout>
+
 
         <TextView
-            android:id="@+id/mushroomIDText"
+            android:id="@+id/title1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Safety Information"
+            android:textStyle="bold"
             android:textSize="15sp"
             android:textColor="@color/black"
+            android:layout_marginTop="20dp"/>
+
+        <!-- Edibility Container -->
+        <LinearLayout
+            android:id="@+id/edibilityContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_edittext"
+            android:gravity="center_vertical">
+
+            <!-- Icon spanning both TextViews -->
+            <ImageView
+                android:id="@+id/edibilityIcon"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_edibility" />
+
+            <!-- Vertical container for the two TextViews -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/displayEdibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:text="Edibility"/>
+
+                <TextView
+                    android:id="@+id/mushroomEdibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/black"
+                    android:text="Edibility"/>
+            </LinearLayout>
+        </LinearLayout>
+
+
+        <!-- Description Container -->
+        <LinearLayout
+            android:id="@+id/descriptionContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
             android:layout_marginTop="16dp"
-            android:text="mushroom ID"/>
+            android:background="@drawable/bg_edittext">
+
+            <TextView
+                android:id="@+id/displayDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="5dp"
+                android:textColor="@color/black"
+                android:text="Description"/>
+
+            <TextView
+                android:id="@+id/resultDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/black"
+                android:text="Description"/>
+        </LinearLayout>
+
+        <!-- Habitat Container -->
+        <LinearLayout
+            android:id="@+id/habitatContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext">
+
+            <TextView
+                android:id="@+id/displayHabitat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="5dp"
+                android:textColor="@color/black"
+                android:text="Habitat"/>
+
+            <TextView
+                android:id="@+id/resultHabitat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/black"
+                android:text="Habitat"/>
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/mushroomEdibility"
+            android:id="@+id/title2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Characteristics"
+            android:textStyle="bold"
             android:textSize="15sp"
             android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="edibility"/>
+            android:layout_marginTop="20dp"/>
 
-        <TextView
-            android:id="@+id/resultCommonNames"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Common Names"/>
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical"
+            android:layout_marginTop="5dp">
 
-        <TextView
-            android:id="@+id/resultDescription"
-            android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:background="@drawable/bg_edittext"
+                android:layout_marginEnd="8dp">
+
+                <TextView
+                    android:id="@+id/resultFirst"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="First Value"
+                    android:textSize="13sp"
+                    android:textColor="@color/black"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:background="@drawable/bg_edittext"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:id="@+id/resultSecond"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Second Value"
+                    android:textSize="13sp"
+                    android:textColor="@color/black"
+                    android:gravity="center"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Culinary Container -->
+        <LinearLayout
+            android:id="@+id/culinaryContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Description"/>
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/resultHabitat"
-            android:layout_width="wrap_content"
+            <!-- Icon spanning both TextViews -->
+            <ImageView
+                android:id="@+id/culinaryIcon"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_culinary" /> <!-- Replace with your culinary icon -->
+
+            <!-- Vertical container for the two TextViews -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/displayCulinary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="5dp"
+                    android:textColor="@color/black"
+                    android:text="Culinary Uses"/>
+
+                <TextView
+                    android:id="@+id/resultCulinary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/black"
+                    android:text="Culinary uses"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Medicinal Container -->
+        <LinearLayout
+            android:id="@+id/medicinalContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Habitat"/>
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/resultCulinary"
-            android:layout_width="wrap_content"
+            <!-- Icon spanning both TextViews -->
+            <ImageView
+                android:id="@+id/medicinalIcon"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_medicinal" /> <!-- Replace with your medicinal icon -->
+
+            <!-- Vertical container for the two TextViews -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/displayMedicinal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="5dp"
+                    android:textColor="@color/black"
+                    android:text="Medicinal Uses"/>
+
+                <TextView
+                    android:id="@+id/resultMedicinal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/black"
+                    android:text="Medicinal uses"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Toxicity Container -->
+        <LinearLayout
+            android:id="@+id/toxicityContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Culinary uses"/>
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/resultMedicinal"
-            android:layout_width="wrap_content"
+            <!-- Icon spanning both TextViews -->
+            <ImageView
+                android:id="@+id/toxicityIcon"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_toxicity" /> <!-- Replace with your toxicity icon -->
+
+            <!-- Vertical container for the two TextViews -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/displayToxicity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="5dp"
+                    android:textColor="@color/black"
+                    android:text="Toxicity"/>
+
+                <TextView
+                    android:id="@+id/resultToxicity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/black"
+                    android:text="Toxicity"/>
+            </LinearLayout>
+        </LinearLayout>
+
+
+        <!-- Symptoms Container -->
+        <LinearLayout
+            android:id="@+id/symptomsContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Medicinal uses"/>
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/resultFacts"
-            android:layout_width="wrap_content"
+            <!-- Icon spanning both TextViews -->
+            <ImageView
+                android:id="@+id/symptomsIcon"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_symptoms" /> <!-- Replace with your symptoms icon -->
+
+            <!-- Vertical container for the two TextViews -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/displaySymptoms"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="5dp"
+                    android:textColor="@color/black"
+                    android:text="Onset Symptoms"/>
+
+                <TextView
+                    android:id="@+id/resultSymptoms"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/black"
+                    android:text="Onset Symptoms"/>
+            </LinearLayout>
+        </LinearLayout>
+
+
+        <!-- Duration Container -->
+        <LinearLayout
+            android:id="@+id/durationContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Facts"/>
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/resultToxicity"
-            android:layout_width="wrap_content"
+            <!-- Icon spanning both TextViews -->
+            <ImageView
+                android:id="@+id/durationIcon"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_duration" /> <!-- Replace with your duration icon -->
+
+            <!-- Vertical container for the two TextViews -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/displayDuration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="5dp"
+                    android:textColor="@color/black"
+                    android:text="Duration of Effects"/>
+
+                <TextView
+                    android:id="@+id/resultDuration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/black"
+                    android:text="Duration of Effects"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Long Term Effects Container -->
+        <LinearLayout
+            android:id="@+id/longTermContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Toxicity"/>
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/resultSymptoms"
-            android:layout_width="wrap_content"
+            <!-- Icon spanning both TextViews -->
+            <ImageView
+                android:id="@+id/longTermIcon"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_long_term" /> <!-- Replace with your long term icon -->
+
+            <!-- Vertical container for the two TextViews -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/displayLongTerm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="5dp"
+                    android:textColor="@color/black"
+                    android:text="Long Term Effects"/>
+
+                <TextView
+                    android:id="@+id/resultLongTerm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/black"
+                    android:text="Long term Effects"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Facts Container -->
+        <LinearLayout
+            android:id="@+id/factsContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Onset Symptoms"/>
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext">
 
-        <TextView
-            android:id="@+id/resultDuration"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Duration of Effects"/>
+            <TextView
+                android:id="@+id/displayFacts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="5dp"
+                android:textColor="@color/black"
+                android:text="Facts"/>
 
-        <TextView
-            android:id="@+id/resultLongTerm"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"
-            android:text="Long term Effects"/>
+            <TextView
+                android:id="@+id/resultFacts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/black"
+                android:text="Facts"/>
+        </LinearLayout>
 
+        <!-- Reminder -->
         <TextView
             android:id="@+id/reminder"
             android:layout_width="match_parent"

@@ -151,12 +151,15 @@ public class FavoritesFragment extends Fragment {
 
                         try {
                             Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), savedUri);
-                            String result = tfliteHelper.classify(bitmap);
+                            ClassificationResult result = tfliteHelper.classify(bitmap);
 
                             Intent intent = new Intent(getContext(), ResultActivity.class);
                             intent.putExtra("photoUri", savedUri.toString());
-                            intent.putExtra("prediction", result);
+                            intent.putExtra("prediction", result.label);      // send label
+                            intent.putExtra("confidence", result.confidence); // send confidence
                             startActivity(intent);
+
+
 
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -172,11 +175,12 @@ public class FavoritesFragment extends Fragment {
             Bitmap bitmap = BitmapFactory.decodeStream(fis);
             fis.close();
 
-            String result = tfliteHelper.classify(bitmap);
+            ClassificationResult result = tfliteHelper.classify(bitmap);
 
             Intent intent = new Intent(getContext(), ResultActivity.class);
             intent.putExtra("photoPath", photoFile.getAbsolutePath());
-            intent.putExtra("prediction", result);
+            intent.putExtra("prediction", result.label);      // send label
+            intent.putExtra("confidence", result.confidence); // send confidence
             startActivity(intent);
 
 
