@@ -40,6 +40,17 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
+import android.widget.ImageButton;
+import androidx.camera.core.Camera;
+import androidx.camera.core.CameraControl;
+import androidx.camera.core.CameraInfo;
+
+import android.database.Cursor;
+import android.provider.MediaStore;
+import android.widget.ImageView;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 public class FavoritesFragment extends Fragment {
 
     private static final String TAG = "FavoritesFragment";
@@ -47,13 +58,18 @@ public class FavoritesFragment extends Fragment {
     private static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.CAMERA};
 
     private PreviewView previewView;
-    private Button btnToggleCamera, btnTakePhoto;
-
+    private Button btnTakePhoto;
+    private ImageButton btnToggleCamera, btnFlash;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageCapture imageCapture;
     private CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
 
     private TFLiteHelper tfliteHelper;
+    private CameraOverlay cameraOverlay;
+    private Camera camera;
+    private boolean isFlashOn = false;
+
+
 
     public FavoritesFragment() { }
 
@@ -63,10 +79,14 @@ public class FavoritesFragment extends Fragment {
         View view = inflater.inflate(R.layout.activity_favorites_fragment, container, false);
 
         previewView = view.findViewById(R.id.previewView);
-        btnToggleCamera = view.findViewById(R.id.btnToggleCamera);
         btnTakePhoto = view.findViewById(R.id.btnTakePhoto);
+        cameraOverlay = view.findViewById(R.id.cameraOverlay);
+        btnFlash = view.findViewById(R.id.btnFlash);
+        btnToggleCamera = view.findViewById(R.id.btnToggleCamera);
+
 
         tfliteHelper = new TFLiteHelper(getContext()); // initialize TFLite
+
 
         // Check permissions
         if (allPermissionsGranted()) {
@@ -77,6 +97,8 @@ public class FavoritesFragment extends Fragment {
 
         btnToggleCamera.setOnClickListener(v -> toggleCamera());
         btnTakePhoto.setOnClickListener(v -> takePhoto());
+        btnFlash.setOnClickListener(v -> toggleFlashMode());
+
 
         return view;
     }
@@ -98,17 +120,44 @@ public class FavoritesFragment extends Fragment {
         imageCapture = new ImageCapture.Builder()
                 .setTargetAspectRatio(AspectRatio.RATIO_4_3)
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .setFlashMode(ImageCapture.FLASH_MODE_AUTO)
                 .build();
+
 
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
         try {
             cameraProvider.unbindAll();
-            cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageCapture);
+            camera = cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageCapture);
         } catch (Exception e) {
             Log.e(TAG, "Use case binding failed", e);
         }
     }
+
+    private void toggleFlashMode() {
+        if (imageCapture == null) return;
+
+        int currentMode = imageCapture.getFlashMode();
+        int newMode;
+
+        switch (currentMode) {
+            case ImageCapture.FLASH_MODE_OFF:
+                newMode = ImageCapture.FLASH_MODE_ON;
+                btnFlash.setImageResource(R.drawable.ic_flash_on);
+                break;
+            case ImageCapture.FLASH_MODE_ON:
+                newMode = ImageCapture.FLASH_MODE_AUTO;
+                btnFlash.setImageResource(R.drawable.ic_flash_auto);
+                break;
+            default: // AUTO
+                newMode = ImageCapture.FLASH_MODE_OFF;
+                btnFlash.setImageResource(R.drawable.ic_flash_off);
+                break;
+        }
+
+        imageCapture.setFlashMode(newMode);
+    }
+
 
     private void toggleCamera() {
         cameraSelector = (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)

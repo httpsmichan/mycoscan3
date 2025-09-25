@@ -17,6 +17,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class ResultActivity extends AppCompatActivity {
 
+    private static final String TAG = "ResultActivity";
+
     private TextView edibilityText;
     private TextView mushroomEdibility;
     private TextView resultDescription;
@@ -121,6 +123,15 @@ public class ResultActivity extends AppCompatActivity {
     private void fetchMushroomDetails(String cleanedPrediction) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+        // ✅ Handle class 25 = Unknown before querying Firestore
+        if (cleanedPrediction.equalsIgnoreCase("Unknown")) {
+            mushroomNameText.setText("Unknown");
+            updateEdibilityUI("Unknown", null);
+            updateDescriptionUI("No information available for this class.");
+            hideAllContainers();
+            return;
+        }
+
         db.collection("mushroom-encyclopedia")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -129,12 +140,20 @@ public class ResultActivity extends AppCompatActivity {
                     for (var doc : queryDocumentSnapshots.getDocuments()) {
                         String name = doc.getString("mushroomName");
 
-                        if (normalize(name).equalsIgnoreCase(normalize(cleanedPrediction))) {
+                        // ✅ Use namesMatch() instead of plain normalize()
+                        if (namesMatch(name, cleanedPrediction)) {
                             mushroomDocId = doc.getId();
 
                             String edibility = doc.getString("edibility");
                             String reason = doc.getString("reason");
                             String description = doc.getString("description");
+
+                            String reasonTrim = reason != null ? reason.trim() : null;
+
+                            Log.d(TAG, "Found doc id=" + mushroomDocId +
+                                    " mushroomName='" + name +
+                                    "' edibility='" + edibility +
+                                    "' reason='" + reasonTrim + "'");
 
                             Object commonNames = doc.get("commonNames");
                             Object habitats = doc.get("habitats");
@@ -147,8 +166,7 @@ public class ResultActivity extends AppCompatActivity {
                             Object longTerm = doc.get("longTerm");
                             Object characteristics = doc.get("characteristics");
 
-                            updateEdibilityUI(edibility);
-                            updateEdibilityReasonUI(edibility, reason);
+                            updateEdibilityUI(edibility, reasonTrim);
                             updateDescriptionUI(description != null ? description : "No description found.");
 
                             updateListTextView(mushroomCommonNamesText, commonNames);
@@ -173,7 +191,12 @@ public class ResultActivity extends AppCompatActivity {
                             showContainerIfNotNull(durationContainer, duration);
                             showContainerIfNotNull(longTermContainer, longTerm);
                             showContainerIfNotNull(factsContainer, facts);
-                            showContainerIfNotNull(mushroomCommonNamesText.getParent() instanceof LinearLayout ? (LinearLayout)mushroomCommonNamesText.getParent() : null, commonNames);
+                            showContainerIfNotNull(
+                                    mushroomCommonNamesText.getParent() instanceof LinearLayout
+                                            ? (LinearLayout)mushroomCommonNamesText.getParent()
+                                            : null,
+                                    commonNames
+                            );
 
                             found = true;
                             break;
@@ -181,19 +204,30 @@ public class ResultActivity extends AppCompatActivity {
                     }
 
                     if (!found) {
-                        updateEdibilityUI("Unknown");
-                        updateEdibilityReasonUI("Unknown", null);
+                        Log.d(TAG, "No matching mushroom document found for prediction: " + cleanedPrediction);
+                        updateEdibilityUI("Unknown", null);
                         updateDescriptionUI("No description available.");
                         hideAllContainers();
                     }
                 })
                 .addOnFailureListener(e -> {
-                    updateEdibilityUI("Unknown");
-                    updateEdibilityReasonUI("Unknown", null);
+                    Log.e(TAG, "Failed to fetch mushroom-encyclopedia docs", e);
+                    updateEdibilityUI("Unknown", null);
                     updateDescriptionUI("Failed to load description.");
                     hideAllContainers();
                 });
     }
+
+    private String cleanName(String name) {
+        if (name == null) return "";
+        // Remove parentheses and trim
+        return name.replaceAll("\\(.*?\\)", "").trim();
+    }
+
+    private boolean namesMatch(String a, String b) {
+        return normalize(cleanName(a)).equalsIgnoreCase(normalize(cleanName(b)));
+    }
+
 
     private void hideAllContainers() {
         edibilityContainer.setVisibility(LinearLayout.GONE);
@@ -263,58 +297,59 @@ public class ResultActivity extends AppCompatActivity {
         resultDescription.setText("Description: " + description);
     }
 
-    private void updateEdibilityUI(String edibility) {
-        String displayValue = (edibility == null) ? "N/A" : edibility;
-        int bgColor = Color.TRANSPARENT;
-        int borderColor = Color.TRANSPARENT;
-
-        if (edibility != null) {
-            switch (edibility.toLowerCase()) {
-                case "edible":
-                    displayValue = "Edible";
-                    bgColor = Color.parseColor("#804CAF50"); // semi-transparent green
-                    borderColor = Color.parseColor("#4CAF50"); // opaque green
-                    break;
-                case "poisonous":
-                    displayValue = "Poisonous";
-                    bgColor = Color.parseColor("#80D11406"); // semi-transparent red
-                    borderColor = Color.parseColor("#D11406"); // opaque red
-                    break;
-                default:
-                    displayValue = edibility;
-                    bgColor = Color.TRANSPARENT;
-                    borderColor = Color.TRANSPARENT;
-                    break;
-            }
-        }
-
-        mushroomEdibility.setText(displayValue);
-
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setColor(bgColor);
-        drawable.setCornerRadius(20f);
-        drawable.setStroke(2, borderColor); // 2px border with opaque color
-        edibilityContainer.setBackground(drawable);
-    }
-
     @SuppressLint("SetTextI18n")
-    private void updateEdibilityReasonUI(String edibility, String reason) {
+    private void updateEdibilityUI(String edibility, String reason) {
         if (edibility == null) edibility = "N/A";
 
         String displayValue;
+        int bgColor = Color.TRANSPARENT;
+        int borderColor = Color.TRANSPARENT;
+
         switch (edibility.toLowerCase()) {
+            case "edible":
+                displayValue = "Edible";
+                bgColor = Color.parseColor("#804CAF50");
+                borderColor = Color.parseColor("#4CAF50");
+                break;
+            case "poisonous":
+                displayValue = "Poisonous";
+                bgColor = Color.parseColor("#80D11406");
+                borderColor = Color.parseColor("#D11406");
+                break;
             case "ediblew":
                 displayValue = "Edible with Caution";
+                bgColor = Color.parseColor("#80FFC107");
+                borderColor = Color.parseColor("#FFC107");
                 break;
             case "inediblemed":
                 displayValue = "Inedible (Medicinal)";
+                bgColor = Color.parseColor("#80857D7D");
+                borderColor = Color.parseColor("#857D7D");
+                break;
+            case "unknown":   // ✅ New case for Unknown
+                displayValue = "Unknown";
+                bgColor = Color.parseColor("#80808080");  // light gray
+                borderColor = Color.parseColor("#A0A0A0"); // darker gray border
                 break;
             default:
                 displayValue = edibility;
                 break;
         }
 
-        if (reason == null || reason.isEmpty()) mushroomEdibility.setText("Edibility: " + displayValue);
-        else mushroomEdibility.setText("Edibility: " + displayValue + ", " + reason);
+        if (reason != null && !reason.isEmpty()) {
+            String combined = displayValue + ": " + reason;
+            mushroomEdibility.setText(combined);
+            Log.d(TAG, "Setting mushroomEdibility text -> " + combined);
+        } else {
+            mushroomEdibility.setText(displayValue);
+            Log.d(TAG, "Setting mushroomEdibility text -> " + displayValue + " (no reason)");
+        }
+
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(bgColor);
+        drawable.setCornerRadius(20f);
+        drawable.setStroke(2, borderColor);
+        edibilityContainer.setBackground(drawable);
     }
+
 }

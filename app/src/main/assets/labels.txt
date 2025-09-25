@@ -1,23 +1,26 @@
-0 Agaricus Campestris
-1 Agaricus Subrufescens
-2 Auricularia Auricula Judae
-3 Auricularia Polytricha
-4 Calvatia Cyathiformis
-5 Chlorophyllum Molybdites
-6 Coprinellus Micaceus
-7 Coprinopsis Atramentaria
-8 Ganoderma Applanatum
-9 Ganoderma Lucidum
-10 Lentinus Sajor Caju
-11 Lentinus Tigrinus
-12 Lepiota Cristata
-13 Macrolepiota Procera
-14 Microporus Xanthopus
-15 Mycena Galericulata
-16 Mycena Pura
-17 Pleurotus Cystidiosus
-18 Pleurotus Ostreatus
-19 Psathyrella Candolleana
-20 Schizophyllum Commune
-21 Termitomyces Clypeatus
-22 Volvariella Volvacea
+0 Agaricus Subrufescens (Wine-red Agaricus)
+1 Auricularia auricula Judae (Jelly ear, Judas ear)
+2 Calvatia Cyathiformis ( purple-spored puffball)
+3 Calvatia Gigantea (Giant Puffball)
+4 Chlorophyllum Molybdites (False Parasol)
+5 Coprinellus Micaceus (Glistening Inky Cap)
+6 Coprinopsis Atramentaria (Common Ink Cap)
+7 Ganoderma Applanatum (Artist's Conk)
+8 Ganoderma Lucidum (Lingzhi, Reishi)
+9 Lentinus Sajor Caju (Funnel Woodcap)
+10 Lentinus Tigrinus (Tiger Sawgill)
+11 Macrolepiota Procera (Snakes Hat)
+12 Lepiota Cristata (Stinking Parasol)
+13 Microporus Xanthopus (Golden-footed Polypore)
+14 Mycena Galericulata (Common Bonnet)
+15 Mycena Pura (Lilac Bellcap)
+16 Pleurotus citrinopileatus (Golden Oyster)
+17 Pleurotus Cystidiosus (Maple Oyster)
+18 Pleurotus djamor (Pink Oyster)
+19 Pleurotus ostreatus (Pearl & Blue Oyster)
+20 Pleurotus pulmonarius (Phoenix Oyster)
+21 Schizophyllum Commune (Split Gill Fungus)
+22 Termitomyces_clypeatus (Termite)
+23 Volvariella Volvacea (Paddy Straw)
+24 Psathyrella Candolleana (Pale Brittlestem)
+25 Unknown

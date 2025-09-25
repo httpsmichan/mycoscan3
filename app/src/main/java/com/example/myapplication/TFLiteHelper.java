@@ -15,7 +15,7 @@ public class TFLiteHelper {
     public TFLiteHelper(Context context) {
         try {
             Log.d("TFLiteHelper", "Attempting to load model...");
-            tflite = new Interpreter(FileUtil.loadMappedFile(context, "model_unquant.tflite"));
+            tflite = new Interpreter(FileUtil.loadMappedFile(context, "mycoscan_model.tflite"));
             Log.d("TFLiteHelper", "Model loaded successfully!");
 
             labels = FileUtil.loadLabels(context, "labels.txt");
