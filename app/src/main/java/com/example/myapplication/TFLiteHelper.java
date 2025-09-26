@@ -3,8 +3,10 @@ package com.example.myapplication;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
+
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.support.common.FileUtil;
+
 import java.util.List;
 
 public class TFLiteHelper {
@@ -63,8 +65,14 @@ public class TFLiteHelper {
         String bestLabel = labels.get(maxIndex);
         float confidence = output[0][maxIndex];
 
+// ✅ Add threshold check here
+        if (confidence < 0.8f) {
+            bestLabel = "Unknown";
+        }
+
         Log.d("TFLiteHelper", "Prediction: " + bestLabel + " (confidence: " + confidence + ")");
 
         return new ClassificationResult(bestLabel, confidence);
+
     }
 }

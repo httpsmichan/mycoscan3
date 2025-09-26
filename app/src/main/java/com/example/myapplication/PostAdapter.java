@@ -96,12 +96,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             holder.tvVerifiedStatus.setVisibility(View.VISIBLE);
         }
 
-        // Mushroom type & description
+        // Mushroom type
         holder.tvMushroomType.setText(post.getMushroomType() != null ? post.getMushroomType() : "Unknown type");
-        holder.tvDescription.setText(post.getDescription() != null ? post.getDescription() : "");
 
         // --------------------------
-        // Load image with debug logging (replaced section)
+        // Load image with debug logging
         // --------------------------
         String imageUrl = post.getImageUrl();
         Log.d("PostAdapter", "Loading image for post " + post.getPostId() + " with URL: " + imageUrl);
@@ -112,7 +111,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             Glide.with(holder.ivPostImage.getContext())
                     .load(imageUrl)
                     .placeholder(android.R.drawable.ic_menu_report_image)
-                    .error(android.R.drawable.ic_menu_close_clear_cancel) // Add error placeholder
+                    .error(android.R.drawable.ic_menu_close_clear_cancel)
                     .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
                         @Override
                         public boolean onLoadFailed(@Nullable com.bumptech.glide.load.engine.GlideException e,
@@ -139,6 +138,15 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             holder.ivPostImage.setImageResource(android.R.drawable.ic_menu_report_image);
         }
 
+        // Location
+        if (post.getLocation() != null && !post.getLocation().isEmpty()) {
+            holder.tvLocation.setText(post.getLocation());
+            holder.ivLocationIcon.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvLocation.setText("Unknown location");
+            holder.ivLocationIcon.setVisibility(View.GONE);
+        }
+
         // Open PostDetailActivity on click
         holder.itemView.setOnClickListener(v -> {
             Log.d("PostAdapter", "Clicking post with ID: " + post.getPostId());
@@ -147,7 +155,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             intent.putExtra("postId", post.getPostId());
             intent.putExtra("imageUrl", post.getImageUrl());
             intent.putExtra("mushroomType", post.getMushroomType());
-            intent.putExtra("description", post.getDescription());
             intent.putExtra("userId", post.getUserId());
             intent.putExtra("username", post.getUsername());
             intent.putExtra("latitude", post.getLatitude());
@@ -183,12 +190,121 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             popup.show();
         });
 
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        if (currentUser != null) {
+            String userId = currentUser.getUid();
+
+            // Listen to this user's vote for this post
+            db.collection("posts")
+                    .document(post.getPostId())
+                    .collection("votes")
+                    .document(userId)
+                    .addSnapshotListener((snapshot, error) -> {
+                        if (snapshot != null && snapshot.exists()) {
+                            String type = snapshot.getString("type");
+                            if ("upvote".equals(type)) {
+                                holder.ivUpIcon.setColorFilter(context.getResources().getColor(android.R.color.holo_green_dark));
+                                holder.ivDownIcon.setColorFilter(null);
+                            } else if ("downvote".equals(type)) {
+                                holder.ivDownIcon.setColorFilter(context.getResources().getColor(android.R.color.holo_red_dark));
+                                holder.ivUpIcon.setColorFilter(null);
+                            }
+                        } else {
+                            // No vote yet, reset colors
+                            holder.ivUpIcon.setColorFilter(null);
+                            holder.ivDownIcon.setColorFilter(null);
+                        }
+                    });
+
+            // Handle upvote click
+            holder.ivUpIcon.setOnClickListener(v -> {
+                db.collection("posts")
+                        .document(post.getPostId())
+                        .collection("votes")
+                        .document(userId)
+                        .get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc.exists() && "upvote".equals(doc.getString("type"))) {
+                                // 👇 remove vote if already upvoted
+                                doc.getReference().delete();
+                            } else {
+                                // 👇 set new upvote
+                                doc.getReference().set(new Vote("upvote", System.currentTimeMillis()));
+                            }
+                        });
+            });
+
+            // Handle downvote click
+            holder.ivDownIcon.setOnClickListener(v -> {
+                db.collection("posts")
+                        .document(post.getPostId())
+                        .collection("votes")
+                        .document(userId)
+                        .get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc.exists() && "downvote".equals(doc.getString("type"))) {
+                                // 👇 remove vote if already downvoted
+                                doc.getReference().delete();
+                            } else {
+                                // 👇 set new downvote
+                                doc.getReference().set(new Vote("downvote", System.currentTimeMillis()));
+                            }
+                        });
+            });
+        }
+        // Edibility badge
+        String category = post.getCategory() != null ? post.getCategory() : "Unknown";
+        holder.tvEdibility.setText(category);
+
+        int bgColor;
+        switch (category.toLowerCase()) {
+            case "edible":
+                bgColor = context.getResources().getColor(android.R.color.holo_green_light);
+                break;
+            case "inedible":
+                bgColor = context.getResources().getColor(android.R.color.darker_gray);
+                break;
+            case "poisonous":
+                bgColor = context.getResources().getColor(android.R.color.holo_red_light);
+                break;
+            case "medicinal":
+                bgColor = context.getResources().getColor(android.R.color.holo_blue_light);
+                break;
+            default:
+                bgColor = context.getResources().getColor(android.R.color.darker_gray);
+                break;
+        }
+
+        // Create rounded background with 5dp radius
+        float radius = 5 * context.getResources().getDisplayMetrics().density; // convert dp → px
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(bgColor);
+        bg.setCornerRadius(radius);
+
+        holder.tvEdibility.setBackground(bg);
+        holder.tvEdibility.setTextColor(context.getResources().getColor(android.R.color.white));
+
     }
 
     @Override
     public int getItemCount() {
         return postList.size();
     }
+
+    class Vote {
+        public String type;
+        public long timestamp;
+
+        public Vote() {}
+
+        public Vote(String type, long timestamp) {
+            this.type = type;
+            this.timestamp = timestamp;
+        }
+    }
+
 
     private void deletePost(String postId, int position) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -209,8 +325,9 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     }
 
     static class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView tvDetailUser, tvTimeStamp, tvMushroomType, tvDescription, tvVerifiedStatus;
-        ImageView ivPostImage, menuOptions, ivVerificationBadge; // Added badge ImageView
+        TextView tvDetailUser, tvTimeStamp, tvMushroomType, tvVerifiedStatus, tvLocation, tvEdibility;
+        ImageView ivPostImage, menuOptions, ivVerificationBadge, ivLocationIcon;
+        ImageView ivUpIcon, ivDownIcon;
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -218,10 +335,15 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvTimeStamp = itemView.findViewById(R.id.tvTimeStamp);
             tvVerifiedStatus = itemView.findViewById(R.id.tvVerifiedStatus);
             tvMushroomType = itemView.findViewById(R.id.tvMushroomType);
-            tvDescription = itemView.findViewById(R.id.tvDescription);
             ivPostImage = itemView.findViewById(R.id.ivPostImage);
             menuOptions = itemView.findViewById(R.id.menuOptions);
-            ivVerificationBadge = itemView.findViewById(R.id.ivVerificationBadge); // Add this line
+            ivVerificationBadge = itemView.findViewById(R.id.ivVerificationBadge);
+            tvLocation = itemView.findViewById(R.id.tvLocation);
+            ivLocationIcon = itemView.findViewById(R.id.ivLocationIcon);
+            ivUpIcon = itemView.findViewById(R.id.ivUpIcon);
+            ivDownIcon = itemView.findViewById(R.id.ivDownIcon);
+            tvEdibility = itemView.findViewById(R.id.tvEdibility);
+
         }
     }
 }

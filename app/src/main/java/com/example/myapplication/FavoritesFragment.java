@@ -15,9 +15,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.camera.core.AspectRatio;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
@@ -68,6 +72,8 @@ public class FavoritesFragment extends Fragment {
     private CameraOverlay cameraOverlay;
     private Camera camera;
     private boolean isFlashOn = false;
+    private static final int REQUEST_CODE_PICK_IMAGE = 20;
+
 
 
 
@@ -87,6 +93,26 @@ public class FavoritesFragment extends Fragment {
 
         tfliteHelper = new TFLiteHelper(getContext()); // initialize TFLite
 
+        ImageButton btnPickGallery = view.findViewById(R.id.btnPickGallery);
+
+// Load last image from MediaStore
+        Uri lastImageUri = getLastImageUri();
+        if (lastImageUri != null) {
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), lastImageUri);
+                btnPickGallery.setImageBitmap(bitmap);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+// Open gallery when clicked
+        btnPickGallery.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
+            startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE);
+        });
+
 
         // Check permissions
         if (allPermissionsGranted()) {
@@ -98,6 +124,23 @@ public class FavoritesFragment extends Fragment {
         btnToggleCamera.setOnClickListener(v -> toggleCamera());
         btnTakePhoto.setOnClickListener(v -> takePhoto());
         btnFlash.setOnClickListener(v -> toggleFlashMode());
+
+        FrameLayout scanningTipsContainer = view.findViewById(R.id.scanningTipsContainer);
+        TextView scanningTipsText = view.findViewById(R.id.scanningTipsText);
+        LinearLayout scanningTipsHeader = view.findViewById(R.id.scanningTipsHeader);
+
+// Set default transparent background
+        scanningTipsContainer.getBackground().setAlpha(0);
+
+        scanningTipsHeader.setOnClickListener(v -> {
+            if (scanningTipsText.getVisibility() == View.GONE) {
+                scanningTipsText.setVisibility(View.VISIBLE);
+                scanningTipsContainer.getBackground().setAlpha(178); // 70% opacity
+            } else {
+                scanningTipsText.setVisibility(View.GONE);
+                scanningTipsContainer.getBackground().setAlpha(0); // fully transparent
+            }
+        });
 
 
         return view;
@@ -131,6 +174,30 @@ public class FavoritesFragment extends Fragment {
             camera = cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageCapture);
         } catch (Exception e) {
             Log.e(TAG, "Use case binding failed", e);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_PICK_IMAGE && resultCode == getActivity().RESULT_OK && data != null) {
+            Uri imageUri = data.getData();
+            if (imageUri != null) {
+                try {
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), imageUri);
+                    ClassificationResult result = tfliteHelper.classify(bitmap);
+
+                    Intent intent = new Intent(getContext(), ResultActivity.class);
+                    intent.putExtra("photoUri", imageUri.toString());
+                    intent.putExtra("prediction", result.label);
+                    intent.putExtra("confidence", result.confidence);
+                    startActivity(intent);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getContext(), "Failed to load image", Toast.LENGTH_SHORT).show();
+                }
+            }
         }
     }
 
@@ -228,8 +295,8 @@ public class FavoritesFragment extends Fragment {
 
             Intent intent = new Intent(getContext(), ResultActivity.class);
             intent.putExtra("photoPath", photoFile.getAbsolutePath());
-            intent.putExtra("prediction", result.label);      // send label
-            intent.putExtra("confidence", result.confidence); // send confidence
+            intent.putExtra("prediction", result.label);
+            intent.putExtra("confidence", result.confidence);
             startActivity(intent);
 
 
@@ -273,4 +340,23 @@ public class FavoritesFragment extends Fragment {
             }
         }
     }
+
+    private Uri getLastImageUri() {
+        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String[] projection = { MediaStore.Images.Media._ID, MediaStore.Images.Media.DATE_ADDED };
+        String sortOrder = MediaStore.Images.Media.DATE_ADDED + " DESC";
+
+        try (Cursor cursor = requireContext().getContentResolver().query(uri, projection, null, null, sortOrder + " LIMIT 1")) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int idIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+                long id = cursor.getLong(idIndex);
+                return Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(id));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 }

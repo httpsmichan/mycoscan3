@@ -12,13 +12,15 @@ public class Post {
     private long timestamp;
     private String verified;
     private String location;
+    private String category;
+
 
 
     public Post() {}
 
     public Post(String mushroomType, String description, String imageUrl,
                 String userId, String username, double latitude, double longitude,
-                long timestamp, String verified, String location) {
+                long timestamp, String verified, String location, String category) {
         this.mushroomType = mushroomType;
         this.description = description;
         this.imageUrl = imageUrl;
@@ -29,6 +31,7 @@ public class Post {
         this.timestamp = timestamp;
         this.verified = verified;
         this.location = location;
+        this.category = category;
     }
 
     // Getters
@@ -43,6 +46,7 @@ public class Post {
     public long getTimestamp() { return timestamp; }
     public String getVerified() { return verified; }
     public String getLocation() { return location; }
+    public String getCategory() { return category; }
 
     // Setters (needed for Firestore and setting document ID)
     public void setPostId(String postId) { this.postId = postId; }
@@ -56,4 +60,5 @@ public class Post {
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
     public void setVerified(String verified) { this.verified = verified; }
     public void setLocation(String location) { this.location = location; }
+    public void setCategory(String category) { this.category = category; }
 }

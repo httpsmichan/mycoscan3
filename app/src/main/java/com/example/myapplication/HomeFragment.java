@@ -8,6 +8,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -119,6 +120,36 @@ public class HomeFragment extends Fragment {
         searchSuggestionsRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         searchSuggestionsRecycler.setAdapter(suggestionAdapter);
         tipCardsContainer = view.findViewById(R.id.tipCardsContainer);
+
+        fabReport = view.findViewById(R.id.fabReport);
+        fabReport.setOnClickListener(v -> showReportDialog());
+
+        fabReport.setOnTouchListener(new View.OnTouchListener() {
+            private float dX, dY;
+
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        dX = view.getX() - event.getRawX();
+                        dY = view.getY() - event.getRawY();
+                        break;
+
+                    case MotionEvent.ACTION_MOVE:
+                        view.animate()
+                                .x(event.getRawX() + dX)
+                                .y(event.getRawY() + dY)
+                                .setDuration(0)
+                                .start();
+                        break;
+
+                    default:
+                        return false;
+                }
+                return true;
+            }
+        });
+
 
         // Sample suggestions
         final String[] categories = {"Edible", "Inedible", "Poisonous"};

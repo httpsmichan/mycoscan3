@@ -33,4 +33,11 @@
     <string name="red_flags_to_always_watch_for_n_death_cap_trio_white_gills_ring_volva_likely_deadly_amanita_do_not_eat_n_any_mushroom_with_white_gills_and_a_white_spore_print_avoid_unless_expert_n_no_go_categories_all_small_brown_mushrooms_lbms_and_mushrooms_that_bruise_blue">Red Flags to Always Watch For:\n- Death Cap Trio: White Gills + Ring + Volva. Likely deadly Amanita. Do not eat.\n- Any Mushroom with White Gills and a White Spore Print. Avoid unless expert.\n- No-Go Categories: All small brown mushrooms (LBMs) and mushrooms that bruise blue.</string>
     <string name="flash_toggle" />
     <string name="last_photo" />
+    <string name="scanning_tips">
+    1. Consider the mushroom angle; most mushrooms look similar, so capture the correct side.\n
+    2. Make sure the mushroom is fully visible in the frame.\n
+    3. Ensure good lighting to capture details.
+</string>
+    <string name="pick_from_gallery" />
+
 </resources>
