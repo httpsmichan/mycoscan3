@@ -2,219 +2,383 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/BG"
-    android:padding="16dp">
+    android:padding="10dp">
 
+    <!-- 👇 Single container -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
-        <!-- Header with Username, Verified, and Menu -->
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="4dp">
+            android:layout_marginBottom="10dp"
+            android:backgroundTint="@android:color/white"
+            app:cardCornerRadius="0dp"
+            app:strokeWidth="0.5dp"
+            android:elevation="4dp">
 
-            <!-- Username -->
             <TextView
-                android:id="@+id/tvDetailUser"
+                android:id="@+id/postsHeader"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="username"
+                android:text="Post Details"
+                android:textColor="@android:color/black"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:textSize="16sp"/>
+                android:padding="6dp"
+                android:layout_gravity="center"/>
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- Verified status -->
-            <TextView
-                android:id="@+id/tvVerified"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Pending review"
-                android:textSize="14sp"
-                android:textColor="@android:color/holo_red_dark"
-                android:layout_marginStart="8dp"/>
-
-            <!-- Spacer -->
-            <View
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"/>
-
-            <!-- Three dot menu -->
-            <ImageView
-                android:id="@+id/ivMenuOptions"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_more_vert"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="4dp"
-                android:contentDescription="Menu options"/>
-        </LinearLayout>
-
-        <!-- Timestamp -->
-        <TextView
-            android:id="@+id/tvTimestamp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Posted on: 2025-09-22 14:35"
-            android:textSize="12sp"
-            android:textColor="@android:color/darker_gray"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- Image -->
-        <ImageView
-            android:id="@+id/ivDetailImage"
-            android:layout_width="match_parent"
-            android:layout_height="250dp"
-            android:scaleType="centerCrop"
-            android:layout_marginBottom="10dp"/>
-
-        <!-- Voting layout -->
+        <!-- Post content container -->
         <LinearLayout
-            android:id="@+id/voteLayout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_gravity="end">
-
-            <Button
-                android:id="@+id/btnUpvote"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="^" />
-
-            <Button
-                android:id="@+id/btnDownvote"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="v" />
-
-            <TextView
-                android:id="@+id/tvUpvotes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="+0"
-                android:layout_marginEnd="16dp"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:id="@+id/tvDownvotes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="-0"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
-        </LinearLayout>
-
-        <!-- Mushroom Type -->
-        <TextView
-            android:id="@+id/tvDetailType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Mushroom Type"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="4dp"/>
-
-        <!-- Category -->
-        <TextView
-            android:id="@+id/tvCategory"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Category: Edible"
-            android:textSize="14sp"
-            android:textColor="@android:color/holo_blue_dark"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- Description -->
-        <TextView
-            android:id="@+id/tvDetailDesc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Description"
-            android:layout_marginBottom="12dp"/>
+            android:orientation="vertical">
 
-        <!-- Location -->
-        <TextView
-            android:id="@+id/tvLocation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Location: Unknown"
-            android:textSize="14sp"
-            android:textColor="@android:color/black"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- Mini OSM Preview -->
-        <FrameLayout
-            android:id="@+id/geoContainer"
-            android:layout_width="match_parent"
-            android:layout_height="150dp"
-            android:layout_marginTop="4dp">
-
-            <org.osmdroid.views.MapView
-                android:id="@+id/miniMapView"
+            <!-- Header with Username, Verified, and Menu -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <Button
-                android:id="@+id/btnOpenFullMap"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:text="⌞⌝"
-                android:textSize="14sp"
-                android:background="@android:color/holo_blue_dark"
-                android:textColor="@android:color/white"
-                android:layout_gravity="top|end"
-                android:layout_margin="8dp"
-                android:padding="0dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"/>
-        </FrameLayout>
-
-        <!-- Comments Section -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Comments"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp"/>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvComments"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:overScrollMode="never"
-            android:scrollbars="vertical"/>
-
-        <!-- Input field + Post button -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
-
-            <EditText
-                android:id="@+id/etComment"
-                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="Write a comment..."
-                android:padding="8dp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="4dp">
 
-            <Button
-                android:id="@+id/btnPostComment"
+                <TextView
+                    android:id="@+id/tvDetailUser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="username"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <ImageView
+                    android:id="@+id/ivMenuOptions"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_more_vert"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="4dp"
+                    android:contentDescription="Menu options" />
+            </LinearLayout>
+
+            <!-- Timestamp + Verified in one row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="start|center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tvTimestamp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Posted on: 2025-09-22 14:35"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/darker_gray" />
+
+                <TextView
+                    android:id="@+id/tvVerified"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pending review"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/holo_red_dark"
+                    android:layout_marginStart="20dp" />
+            </LinearLayout>
+
+
+
+            <ImageView
+                android:id="@+id/ivDetailImage"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:scaleType="centerCrop"
+                android:background="@drawable/my_image"
+                android:clipToOutline="true" />
+
+            <!-- Location + Votes in one horizontal row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_bottom_radius"
+                android:layout_marginBottom="8dp"
+                android:elevation="1dp"
+                android:padding="7dp">
+
+                <!-- Location -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="start|center_vertical">
+
+                    <ImageView
+                        android:id="@+id/icLocation"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_location"
+                        android:contentDescription="Location icon"
+                        android:layout_marginEnd="2dp" />
+
+                    <TextView
+                        android:id="@+id/tvLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Location: Unknown"
+                        android:textSize="10sp"
+                        android:textColor="@android:color/black" />
+                </LinearLayout>
+
+                <!-- Votes -->
+                <LinearLayout
+                    android:id="@+id/voteLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end|center_vertical">
+
+                    <ImageView
+                        android:id="@+id/btnUpvote"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_up"
+                        android:contentDescription="Upvote"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginEnd="4dp" />
+
+                    <TextView
+                        android:id="@+id/tvUpvotes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="+0"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:layout_marginEnd="12dp" />
+
+                    <ImageView
+                        android:id="@+id/btnDownvote"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_down"
+                        android:contentDescription="Downvote"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginEnd="4dp" />
+
+                    <TextView
+                        android:id="@+id/tvDownvotes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-0"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- MapView -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="1dp">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_l"
+                    android:contentDescription="Description Icon"
+                    android:layout_marginEnd="1dp" />
+
+                <TextView
+                    android:id="@+id/locationPreviewLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Location Map Preview:"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"/>
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/geoContainer"
+                android:layout_width="match_parent"
+                android:layout_height="150dp">
+
+                <org.osmdroid.views.MapView
+                    android:id="@+id/miniMapView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <TextView
+                    android:id="@+id/btnOpenFullMap"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View Full Map"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/black"
+                    android:gravity="center"
+                    android:background="@drawable/btn_fullmap_bg"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="8dp"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"
+                    android:elevation="1dp"/>
+
+            </FrameLayout>
+
+            <!-- Extra Description row with icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="1dp">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_l"
+                    android:contentDescription="Description Icon"
+                    android:layout_marginEnd="1dp" />
+
+                <TextView
+                    android:id="@+id/tvDetailDescExtra"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Description:"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvDetailDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Description"
+                android:textSize="12sp"
+                android:layout_marginStart="12dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Comments label + count in one row -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Post"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginStart="10dp"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/commentsLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Comments"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"/>
+
+                <TextView
+                    android:id="@+id/commentsCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="(0)"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"
+                    android:layout_marginStart="4dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/rounded_button"
+                android:padding="10dp"
+                android:layout_marginTop="8dp">
+
+                <EditText
+                    android:id="@+id/etComment"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/rounded_button"
+                    android:hint="Write a comment..."
+                    android:elevation="1dp"
+                    android:padding="8dp"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine"
+                    android:scrollbars="vertical"/>
+
+                <TextView
+                    android:id="@+id/btnPostComment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Post Comment"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/black"
+                    android:gravity="center"
+                    android:background="@drawable/btn_fullmap_bg"
+                    android:layout_gravity="top|start"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:elevation="1dp"/>
+
+            </LinearLayout>
+
+
+            <TextView
+                android:id="@+id/tvDetailType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mushroom Type"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Category: Edible"
+                android:textSize="14sp"
+                android:textColor="@android:color/holo_blue_dark"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Comments"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvComments"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:overScrollMode="never"
+                android:scrollbars="vertical" />
+
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

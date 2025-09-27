@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -59,13 +61,13 @@ public class PostDetailActivity extends AppCompatActivity {
     private String username;
     private String postId;
     private String postAuthorId;
-    private Button btnUpvote, btnDownvote;
-    private TextView tvScore;
+    private ImageView btnUpvote, btnDownvote;
+    private TextView tvUpvotes, tvDownvotes;
+    private FirebaseUser currentUser;
     private ImageView ivMenuOptions;
 
     private String currentUserId;
     private String currentUserVote = null;
-    private TextView tvUpvotes, tvDownvotes;
 
     private List<String> bannedWords = new ArrayList<>();
 
@@ -237,8 +239,76 @@ public class PostDetailActivity extends AppCompatActivity {
         setupComments();
         setupMenuOptions();
 
-        btnUpvote.setOnClickListener(v -> updateVote("upvote"));
-        btnDownvote.setOnClickListener(v -> updateVote("downvote"));
+        // 🔹 --- Voting Logic (same as PostAdapter) ---
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null && postId != null) {
+            String userId = currentUser.getUid();
+
+            // Listen to this user's vote
+            db.collection("posts")
+                    .document(postId)
+                    .collection("votes")
+                    .document(userId)
+                    .addSnapshotListener((snapshot, error) -> {
+                        if (snapshot != null && snapshot.exists()) {
+                            String type = snapshot.getString("type");
+                            if ("upvote".equals(type)) {
+                                btnUpvote.setColorFilter(getResources().getColor(android.R.color.holo_green_dark));
+                                btnDownvote.setColorFilter(null);
+                            } else if ("downvote".equals(type)) {
+                                btnDownvote.setColorFilter(getResources().getColor(android.R.color.holo_red_dark));
+                                btnUpvote.setColorFilter(null);
+                            }
+                        } else {
+                            btnUpvote.setColorFilter(null);
+                            btnDownvote.setColorFilter(null);
+                        }
+                    });
+
+            // Handle upvote click
+            btnUpvote.setOnClickListener(v -> {
+                db.collection("posts")
+                        .document(postId)
+                        .collection("votes")
+                        .document(userId)
+                        .get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc.exists() && "upvote".equals(doc.getString("type"))) {
+                                doc.getReference().delete();
+                            } else {
+                                doc.getReference().set(new Vote("upvote", System.currentTimeMillis()));
+                            }
+                        });
+            });
+
+            // Handle downvote click
+            btnDownvote.setOnClickListener(v -> {
+                db.collection("posts")
+                        .document(postId)
+                        .collection("votes")
+                        .document(userId)
+                        .get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc.exists() && "downvote".equals(doc.getString("type"))) {
+                                doc.getReference().delete();
+                            } else {
+                                doc.getReference().set(new Vote("downvote", System.currentTimeMillis()));
+                            }
+                        });
+            });
+        }
+    }
+
+    class Vote {
+        public String type;
+        public long timestamp;
+
+        public Vote() {}
+
+        public Vote(String type, long timestamp) {
+            this.type = type;
+            this.timestamp = timestamp;
+        }
     }
 
     private void setupMenuOptions() {
@@ -437,17 +507,22 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private void updateVoteUI(String userVote) {
+        int selectedUp = getResources().getColor(android.R.color.holo_green_dark);
+        int selectedDown = getResources().getColor(android.R.color.holo_red_dark);
+        int unselected = getResources().getColor(android.R.color.darker_gray);
+
         if ("upvote".equals(userVote)) {
-            btnUpvote.setBackgroundColor(getResources().getColor(R.color.vote_selected));
-            btnDownvote.setBackgroundColor(getResources().getColor(R.color.vote_unselected));
+            btnUpvote.setColorFilter(selectedUp);
+            btnDownvote.setColorFilter(unselected);
         } else if ("downvote".equals(userVote)) {
-            btnUpvote.setBackgroundColor(getResources().getColor(R.color.vote_unselected));
-            btnDownvote.setBackgroundColor(getResources().getColor(R.color.vote_selected));
+            btnUpvote.setColorFilter(unselected);
+            btnDownvote.setColorFilter(selectedDown);
         } else {
-            btnUpvote.setBackgroundColor(getResources().getColor(R.color.vote_unselected));
-            btnDownvote.setBackgroundColor(getResources().getColor(R.color.vote_unselected));
+            btnUpvote.setColorFilter(unselected);
+            btnDownvote.setColorFilter(unselected);
         }
     }
+
 
     private void setupMiniMap() {
         try {
@@ -466,7 +541,7 @@ public class PostDetailActivity extends AppCompatActivity {
 
                 miniMapView.setOnClickListener(v -> openFullMap());
 
-                Button btnOpenFullMap = findViewById(R.id.btnOpenFullMap);
+                TextView btnOpenFullMap = findViewById(R.id.btnOpenFullMap);
                 btnOpenFullMap.setOnClickListener(v -> openFullMap());
             }
         } catch (Exception e) {
