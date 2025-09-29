@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -10,4 +10,91 @@
         android:layout_height="match_parent"
         />
 
-</LinearLayout>
+    <!-- Search & Filter Container -->
+    <LinearLayout
+        android:id="@+id/searchFilterContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/rounded_button"
+        android:elevation="4dp"
+        android:layout_margin="10dp"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- Search Bar -->
+        <EditText
+            android:id="@+id/searchBar"
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:background="@drawable/search_background"
+            android:hint="Search mushrooms or locations..."
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:backgroundTint="@color/gray"
+            android:padding="10dp"
+            android:textSize="14sp" />
+
+        <!-- Filter Buttons Row -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/filterAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="All"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/filterEdible"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="Edible"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/filterInedible"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="Inedible"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/filterPoisonous"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="Poisonous"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/filterUnknown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="Unknown"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/filterByUser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="By User"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+</RelativeLayout>

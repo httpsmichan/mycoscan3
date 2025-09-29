@@ -6,5 +6,5 @@
     <color name="vote_unselected">#BDBDBD</color>
     <color name="BG">#F9F9F9</color>
     <color name="button">#92d1a1</color>
-
+    <color name="gray">#d7d9d7</color>
 </resources>

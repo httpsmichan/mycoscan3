@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -25,10 +26,26 @@ public class TabbedActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tabbed);
 
+        // Initialize bottomNavigation FIRST
         bottomNavigation = findViewById(R.id.bottomNavigation);
 
-        if (savedInstanceState == null) {
-            checkUserStatusAndLoad(); // 🔎 Firestore check once at startup
+        // Handle incoming intent from ResultActivity (AFTER bottomNavigation is initialized)
+        if (getIntent().getBooleanExtra("openUploadTab", false)) {
+            bottomNavigation.setSelectedItemId(R.id.nav_profile);
+
+            UploadFragment uploadFragment = new UploadFragment();
+            Bundle bundle = new Bundle();
+            bundle.putString("mushroomType", getIntent().getStringExtra("mushroomType"));
+            bundle.putString("category", getIntent().getStringExtra("category"));
+            bundle.putString("description", getIntent().getStringExtra("description"));
+            bundle.putString("photoUri", getIntent().getStringExtra("photoUri"));
+            bundle.putDouble("latitude", getIntent().getDoubleExtra("latitude", 0.0));
+            bundle.putDouble("longitude", getIntent().getDoubleExtra("longitude", 0.0));
+            uploadFragment.setArguments(bundle);
+
+            loadFragment(uploadFragment);
+        } else if (savedInstanceState == null) {
+            checkUserStatusAndLoad(); // Only load default fragment if not coming from share
         }
 
         // Check user active/inactive status
@@ -40,7 +57,6 @@ public class TabbedActivity extends AppCompatActivity {
 
             int itemId = item.getItemId();
             if (itemId == R.id.nav_home) {
-                // ✅ Use cached verified status
                 selectedFragment = isVerified ? new MycologistsHome() : new HomeFragment();
             } else if (itemId == R.id.nav_search) {
                 selectedFragment = new MapFragment();
@@ -57,6 +73,31 @@ public class TabbedActivity extends AppCompatActivity {
             }
             return true;
         });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // Update the intent
+
+        // Handle incoming intent from ResultActivity
+        if (intent.getBooleanExtra("openUploadTab", false)) {
+            bottomNavigation.setSelectedItemId(R.id.nav_profile);
+
+            UploadFragment uploadFragment = new UploadFragment();
+            Bundle bundle = new Bundle();
+            bundle.putString("mushroomType", intent.getStringExtra("mushroomType"));
+            bundle.putString("category", intent.getStringExtra("category"));
+            bundle.putString("description", intent.getStringExtra("description"));
+            bundle.putString("photoUri", intent.getStringExtra("photoUri"));
+            bundle.putDouble("latitude", intent.getDoubleExtra("latitude", 0.0));
+            bundle.putDouble("longitude", intent.getDoubleExtra("longitude", 0.0));
+            uploadFragment.setArguments(bundle);
+
+            loadFragment(uploadFragment);
+
+            intent.removeExtra("openUploadTab");
+        }
     }
 
     private void checkUserStatusAndLoad() {

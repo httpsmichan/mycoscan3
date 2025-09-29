@@ -11,7 +11,9 @@ import android.provider.MediaStore;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,7 +57,7 @@ public class UploadFragment extends Fragment {
 
     private EditText etMushroomType, etDescription;
     private Spinner spinnerCategory;
-    private Button btnPickImage, btnGetLocation, btnSubmit;
+    private TextView btnPickImage, btnGetLocation, btnSubmit;
     private Uri imageUri;
     private String userLocation = "Unknown";
 
@@ -67,6 +69,11 @@ public class UploadFragment extends Fragment {
     private double latitude = 0.0;
     private double longitude = 0.0;
     private MapView mapPreview;
+    private FrameLayout geoContainer;
+    private LinearLayout coordinates;
+    private MapView miniMapView;
+    private TextView btnOpenFullMap;
+
     private List<String> bannedWords = new ArrayList<>();
 
     private final ActivityResultLauncher<Intent> pickImageLauncher =
@@ -98,9 +105,19 @@ public class UploadFragment extends Fragment {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
+        geoContainer = root.findViewById(R.id.geoContainer);
+        coordinates = root.findViewById(R.id.coordinates);
+        miniMapView = root.findViewById(R.id.miniMapView);
+        btnOpenFullMap = root.findViewById(R.id.btnOpenFullMap);
+
+        Configuration.getInstance().setUserAgentValue(requireContext().getPackageName());
+        miniMapView.setTileSource(TileSourceFactory.MAPNIK);
+        miniMapView.setMultiTouchControls(false);
+
+
         loadBannedWords();
 
-        String[] categories = {"Edible", "Poisonous", "Inedible", "Medicinal"};
+        String[] categories = {"Edible", "Poisonous", "Inedible (Non-toxic)", "Medicinal", "Unknown / Needs ID"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, categories);
         spinnerCategory.setAdapter(adapter);
 
@@ -199,7 +216,6 @@ public class UploadFragment extends Fragment {
                                 post.put("username", username);
                                 post.put("verified", "not verified");
 
-
                                 FirebaseFirestore.getInstance()
                                         .collection("posts")
                                         .add(post)
@@ -216,8 +232,8 @@ public class UploadFragment extends Fragment {
                                             imagePreview.setVisibility(View.GONE);
                                             imageUri = null;
 
-                                            tvLatitude.setText("Latitude: ");
-                                            tvLongitude.setText("Longitude: ");
+                                            tvLatitude.setText("Y: ");
+                                            tvLongitude.setText("X: ");
                                             latitude = 0.0;
                                             longitude = 0.0;
                                             userLocation = "Unknown";
@@ -241,6 +257,55 @@ public class UploadFragment extends Fragment {
                     })
                     .dispatch();
         });
+
+        // Check if there's pre-filled data from ResultActivity
+        if (getArguments() != null) {
+            String mushroomType = getArguments().getString("mushroomType");
+            String category = getArguments().getString("category");
+            String description = getArguments().getString("description");
+            String photoUriString = getArguments().getString("photoUri");
+            double lat = getArguments().getDouble("latitude", 0.0);
+            double lon = getArguments().getDouble("longitude", 0.0);
+
+            // Set mushroom type
+            if (mushroomType != null && !mushroomType.isEmpty()) {
+                etMushroomType.setText(mushroomType);
+            }
+
+            // Set category
+            if (category != null && !category.isEmpty()) {
+                for (int i = 0; i < spinnerCategory.getCount(); i++) {
+                    if (spinnerCategory.getItemAtPosition(i).toString().equals(category)) {
+                        spinnerCategory.setSelection(i);
+                        break;
+                    }
+                }
+            }
+
+            // Set description
+            if (description != null && !description.isEmpty()) {
+                etDescription.setText(description);
+            }
+
+            // Set image
+            if (photoUriString != null && !photoUriString.isEmpty()) {
+                imageUri = Uri.parse(photoUriString);
+                imagePreview.setImageURI(imageUri);
+                imagePreview.setVisibility(View.VISIBLE);
+            }
+
+            // Set location
+            if (lat != 0.0 && lon != 0.0) {
+                latitude = lat;
+                longitude = lon;
+                tvLatitude.setText("Y: " + latitude);
+                tvLongitude.setText("X: " + longitude);
+
+                geoContainer.setVisibility(View.VISIBLE);
+                coordinates.setVisibility(View.VISIBLE);
+                setupMiniMap();
+            }
+        }
 
         return root;
     }
@@ -268,21 +333,15 @@ public class UploadFragment extends Fragment {
                 longitude = location.getLongitude();
                 userLocation = latitude + ", " + longitude;
 
-                tvLatitude.setText("Latitude: " + latitude);
-                tvLongitude.setText("Longitude: " + longitude);
+                tvLatitude.setText("Y: " + latitude);
+                tvLongitude.setText("X: " + longitude);
 
-                mapPreview.setVisibility(View.VISIBLE);
-                IMapController mapController = mapPreview.getController();
-                mapController.setZoom(15.0);
-                GeoPoint point = new GeoPoint(latitude, longitude);
-                mapController.setCenter(point);
+                // 🔹 Show mini map container (instead of using mapPreview directly)
+                geoContainer.setVisibility(View.VISIBLE);
+                coordinates.setVisibility(View.VISIBLE);
 
-                mapPreview.getOverlays().clear();
-                Marker marker = new Marker(mapPreview);
-                marker.setPosition(point);
-                marker.setTitle("Exact Location");
-                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-                mapPreview.getOverlays().add(marker);
+                // 🔹 Setup mini map with marker + click logic
+                setupMiniMap();
 
                 Toast.makeText(requireContext(), "Location captured!", Toast.LENGTH_SHORT).show();
             } else {
@@ -291,11 +350,42 @@ public class UploadFragment extends Fragment {
         });
     }
 
-
     private String getCurrentUserId() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         return user != null ? user.getUid() : "anonymous";
     }
+
+    private void setupMiniMap() {
+        try {
+            miniMapView.getController().setZoom(15.0);
+
+            if (latitude != 0.0 && longitude != 0.0) {
+                GeoPoint userLocation = new GeoPoint(latitude, longitude);
+                miniMapView.getController().setCenter(userLocation);
+
+                miniMapView.getOverlays().clear();
+                Marker marker = new Marker(miniMapView);
+                marker.setPosition(userLocation);
+                marker.setTitle("Your Location");
+                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                miniMapView.getOverlays().add(marker);
+
+                // open full map on click
+                miniMapView.setOnClickListener(v -> openFullMap());
+                btnOpenFullMap.setOnClickListener(v -> openFullMap());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void openFullMap() {
+        Intent intent = new Intent(requireContext(), MapActivity.class);
+        intent.putExtra("latitude", latitude);
+        intent.putExtra("longitude", longitude);
+        startActivity(intent);
+    }
+
 
 
     private void getCurrentUsername(OnUsernameFetchedListener listener) {

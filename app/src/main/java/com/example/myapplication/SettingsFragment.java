@@ -39,7 +39,7 @@ public class SettingsFragment extends Fragment {
     private static final int PICK_IMAGE_REQUEST = 1001;
 
     private TextView textUsername, textUserHandle, textUserBio, textFollowers, textFollowing, textPosts;
-    private Button btnEditProfile, btnSecurity, btnJournal, btnLogout, btnVerify;
+    private TextView btnEditProfile, btnSecurity, btnJournal, btnLogout, btnVerify;
     private Button btnAboutTab, btnPostsTab;
     private LinearLayout layoutAboutContent, layoutPostsContent;
 

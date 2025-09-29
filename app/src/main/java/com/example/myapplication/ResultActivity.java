@@ -1,11 +1,13 @@
 package com.example.myapplication;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -19,7 +21,10 @@ public class ResultActivity extends AppCompatActivity {
 
     private static final String TAG = "ResultActivity";
 
-    private TextView edibilityText;
+    private TextView title1;
+    private TextView title2, unknown, reminder, headerDisclaimer, shareCommunity;
+    private LinearLayout charLayout;
+
     private TextView mushroomEdibility;
     private TextView resultDescription;
     private ImageView resultImage;
@@ -58,7 +63,6 @@ public class ResultActivity extends AppCompatActivity {
 
         // Initialize views
         resultImage = findViewById(R.id.resultImage);
-        edibilityText = findViewById(R.id.edibility);
         mushroomEdibility = findViewById(R.id.mushroomEdibility);
         resultDescription = findViewById(R.id.resultDescription);
 
@@ -89,12 +93,86 @@ public class ResultActivity extends AppCompatActivity {
         longTermContainer = findViewById(R.id.longTermContainer);
         factsContainer = findViewById(R.id.factsContainer);
 
-        // Get intent extras
+        title1 = findViewById(R.id.title1);
+        title2 = findViewById(R.id.title2);
+        charLayout = findViewById(R.id.charLayout);
+        unknown = findViewById(R.id.unknown);
+        reminder = findViewById(R.id.reminder);
+        headerDisclaimer = findViewById(R.id.headerDisclaimer);
+        shareCommunity = findViewById(R.id.shareCommunity);
+
+        // Add this at the end of onCreate() method in ResultActivity.java
+
+        shareCommunity.setOnClickListener(v -> {
+            // Get the mushroom name
+            String mushroomName = mushroomNameText.getText().toString();
+
+            // Get the photo URI
+            String photoUriString = getIntent().getStringExtra("photoUri");
+
+            // Get location data from intent (if it was passed to ResultActivity)
+            double latitude = getIntent().getDoubleExtra("latitude", 0.0);
+            double longitude = getIntent().getDoubleExtra("longitude", 0.0);
+
+            // Get edibility/category
+            String edibility = "Unknown / Needs ID";
+            if (mushroomEdibility.getText() != null) {
+                String edibilityText = mushroomEdibility.getText().toString();
+                if (edibilityText.startsWith("Edible with Caution")) {
+                    edibility = "Edible";
+                } else if (edibilityText.startsWith("Edible")) {
+                    edibility = "Edible";
+                } else if (edibilityText.startsWith("Poisonous")) {
+                    edibility = "Poisonous";
+                } else if (edibilityText.startsWith("Inedible (Medicinal)")) {
+                    edibility = "Medicinal";
+                } else if (edibilityText.contains("Unknown")) {
+                    edibility = "Unknown / Needs ID";
+                }
+            }
+
+            // Get description
+            String description = "";
+            if (resultDescription.getText() != null) {
+                String descText = resultDescription.getText().toString();
+                if (descText.startsWith("Description: ")) {
+                    description = descText.substring(13);
+                } else {
+                    description = descText;
+                }
+            }
+
+            // Navigate to TabbedActivity with Upload tab selected
+            Intent intent = new Intent(ResultActivity.this, TabbedActivity.class);
+            intent.putExtra("openUploadTab", true);
+            intent.putExtra("mushroomType", mushroomName);
+            intent.putExtra("category", edibility);
+            intent.putExtra("description", description);
+            intent.putExtra("photoUri", photoUriString);
+            intent.putExtra("latitude", latitude);
+            intent.putExtra("longitude", longitude);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        });
+
+        // Get intent extras first
         String photoUriString = getIntent().getStringExtra("photoUri");
         String prediction = getIntent().getStringExtra("prediction");
         float confidence = getIntent().getFloatExtra("confidence", -1f);
 
+        // Load photo FIRST, before any confidence checks
+        if (photoUriString != null) {
+            Uri photoUri = Uri.parse(photoUriString);
+            resultImage.setImageURI(photoUri);
+        }
+
         String cleanedPrediction = prediction != null ? prediction.replaceFirst("^\\d+\\s+", "").trim() : "";
+
+        if (confidence < 0.8f || cleanedPrediction.isEmpty()) {
+            unknown.setVisibility(View.VISIBLE);
+            hideAllExceptImageAndUnknown();
+            return;
+        }
 
         mushroomNameText.setText(cleanedPrediction);
 
@@ -105,11 +183,6 @@ public class ResultActivity extends AppCompatActivity {
         } else {
             mushroomAccuracyBar.setProgress(0);
             mushroomAccuracyText.setText("0%");
-        }
-
-        if (photoUriString != null) {
-            Uri photoUri = Uri.parse(photoUriString);
-            resultImage.setImageURI(photoUri);
         }
 
         fetchMushroomDetails(cleanedPrediction);
@@ -123,7 +196,7 @@ public class ResultActivity extends AppCompatActivity {
     private void fetchMushroomDetails(String cleanedPrediction) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // ✅ Handle class 25 = Unknown before querying Firestore
+        // Handle class 25 = Unknown before querying Firestore
         if (cleanedPrediction.equalsIgnoreCase("Unknown")) {
             mushroomNameText.setText("Unknown");
             updateEdibilityUI("Unknown", null);
@@ -140,7 +213,6 @@ public class ResultActivity extends AppCompatActivity {
                     for (var doc : queryDocumentSnapshots.getDocuments()) {
                         String name = doc.getString("mushroomName");
 
-                        // ✅ Use namesMatch() instead of plain normalize()
                         if (namesMatch(name, cleanedPrediction)) {
                             mushroomDocId = doc.getId();
 
@@ -179,7 +251,18 @@ public class ResultActivity extends AppCompatActivity {
                             updateListTextView(resultDuration, duration);
                             updateListTextView(resultLongTerm, longTerm);
 
-                            updateCharacteristics(characteristics);
+                            // Only update characteristics if prediction is valid and not Unknown
+                            if (cleanedPrediction != null && !cleanedPrediction.isEmpty() &&
+                                    !cleanedPrediction.equalsIgnoreCase("Unknown")) {
+                                updateCharacteristics(characteristics, cleanedPrediction);
+                            } else {
+                                charLayout.setVisibility(View.GONE);
+                                resultFirst.setVisibility(View.GONE);
+                                resultSecond.setVisibility(View.GONE);
+                                headerDisclaimer.setVisibility(View.GONE);
+                                reminder.setVisibility(View.GONE);
+                                unknown.setVisibility(View.VISIBLE);
+                            }
 
                             showContainerIfNotNull(edibilityContainer, edibility);
                             showContainerIfNotNull(descriptionContainer, description);
@@ -228,6 +311,55 @@ public class ResultActivity extends AppCompatActivity {
         return normalize(cleanName(a)).equalsIgnoreCase(normalize(cleanName(b)));
     }
 
+    private void hideAllExceptImageAndUnknown() {
+        // Hide the mushroom info container
+        findViewById(R.id.mushroomInfoContainer).setVisibility(View.GONE);
+
+        // Hide every container
+        edibilityContainer.setVisibility(View.GONE);
+        descriptionContainer.setVisibility(View.GONE);
+        habitatContainer.setVisibility(View.GONE);
+        culinaryContainer.setVisibility(View.GONE);
+        medicinalContainer.setVisibility(View.GONE);
+        toxicityContainer.setVisibility(View.GONE);
+        symptomsContainer.setVisibility(View.GONE);
+        durationContainer.setVisibility(View.GONE);
+        longTermContainer.setVisibility(View.GONE);
+        factsContainer.setVisibility(View.GONE);
+
+        // Hide text sections
+        mushroomNameText.setVisibility(View.GONE);
+        mushroomCommonNamesText.setVisibility(View.GONE);
+        resultHabitat.setVisibility(View.GONE);
+        resultCulinary.setVisibility(View.GONE);
+        resultMedicinal.setVisibility(View.GONE);
+        resultFacts.setVisibility(View.GONE);
+        resultToxicity.setVisibility(View.GONE);
+        resultSymptoms.setVisibility(View.GONE);
+        resultDuration.setVisibility(View.GONE);
+        resultLongTerm.setVisibility(View.GONE);
+        mushroomEdibility.setVisibility(View.GONE);
+        resultDescription.setVisibility(View.GONE);
+        resultFirst.setVisibility(View.GONE);
+        resultSecond.setVisibility(View.GONE);
+
+        // Hide titles, disclaimers, reminders, accuracy
+        title1.setVisibility(View.GONE);
+        title2.setVisibility(View.GONE);
+        headerDisclaimer.setVisibility(View.GONE);
+        reminder.setVisibility(View.GONE);
+        mushroomAccuracyBar.setVisibility(View.GONE);
+        mushroomAccuracyText.setVisibility(View.GONE);
+
+        // Hide characteristics block
+        charLayout.setVisibility(View.GONE);
+        shareCommunity.setVisibility(View.GONE);
+
+        // Leave resultImage and unknown visible
+        findViewById(R.id.noInformationLayout).setVisibility(View.VISIBLE);
+        resultImage.setVisibility(View.VISIBLE);
+        unknown.setVisibility(View.VISIBLE);
+    }
 
     private void hideAllContainers() {
         edibilityContainer.setVisibility(LinearLayout.GONE);
@@ -255,21 +387,71 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void updateCharacteristics(Object fieldValue) {
+    private void updateCharacteristics(Object fieldValue, String prediction) {
+        // Handle case when prediction is null or Unknown
+        if (prediction == null || prediction.trim().isEmpty() || prediction.equalsIgnoreCase("Unknown")) {
+            charLayout.setVisibility(LinearLayout.GONE);
+            resultFirst.setVisibility(TextView.GONE);
+            resultSecond.setVisibility(TextView.GONE);
+
+            headerDisclaimer.setVisibility(View.GONE);
+            reminder.setVisibility(View.GONE);
+
+            unknown.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        // Hide "Unknown" message for valid prediction
+        unknown.setVisibility(View.GONE);
+
         if (fieldValue instanceof java.util.List) {
             java.util.List<?> list = (java.util.List<?>) fieldValue;
-            resultFirst.setText(list.size() > 0 ? list.get(0).toString() : "N/A");
-            resultSecond.setText(list.size() > 1 ? list.get(1).toString() : "N/A");
-            resultFirst.setVisibility(TextView.VISIBLE);
-            resultSecond.setVisibility(TextView.VISIBLE);
+
+            if (list.isEmpty()) {
+                charLayout.setVisibility(LinearLayout.GONE);
+                return;
+            }
+
+            // First item
+            if (list.size() > 0 && list.get(0) != null && !list.get(0).toString().trim().isEmpty()) {
+                resultFirst.setText(list.get(0).toString());
+                resultFirst.setVisibility(TextView.VISIBLE);
+            } else {
+                resultFirst.setVisibility(TextView.GONE);
+            }
+
+            // Second item
+            if (list.size() > 1 && list.get(1) != null && !list.get(1).toString().trim().isEmpty()) {
+                resultSecond.setText(list.get(1).toString());
+                resultSecond.setVisibility(TextView.VISIBLE);
+            } else {
+                resultSecond.setVisibility(TextView.GONE);
+            }
+
+            // Show charLayout only if at least one is visible
+            if (resultFirst.getVisibility() == TextView.VISIBLE || resultSecond.getVisibility() == TextView.VISIBLE) {
+                charLayout.setVisibility(LinearLayout.VISIBLE);
+            } else {
+                charLayout.setVisibility(LinearLayout.GONE);
+            }
+
         } else if (fieldValue instanceof String) {
-            resultFirst.setText((String) fieldValue);
-            resultSecond.setText("N/A");
+            String value = ((String) fieldValue).trim();
+
+            if (value.isEmpty()) {
+                charLayout.setVisibility(LinearLayout.GONE);
+                return;
+            }
+
+            resultFirst.setText(value);
             resultFirst.setVisibility(TextView.VISIBLE);
-            resultSecond.setVisibility(TextView.VISIBLE);
+            resultSecond.setVisibility(TextView.GONE);
+
+            charLayout.setVisibility(LinearLayout.VISIBLE);
+
         } else {
-            resultFirst.setText("N/A");
-            resultSecond.setText("N/A");
+            // Not a list or string → hide entire block
+            charLayout.setVisibility(LinearLayout.GONE);
             resultFirst.setVisibility(TextView.GONE);
             resultSecond.setVisibility(TextView.GONE);
         }
@@ -326,10 +508,10 @@ public class ResultActivity extends AppCompatActivity {
                 bgColor = Color.parseColor("#80857D7D");
                 borderColor = Color.parseColor("#857D7D");
                 break;
-            case "unknown":   // ✅ New case for Unknown
+            case "unknown":
                 displayValue = "Unknown";
-                bgColor = Color.parseColor("#80808080");  // light gray
-                borderColor = Color.parseColor("#A0A0A0"); // darker gray border
+                bgColor = Color.parseColor("#80808080");
+                borderColor = Color.parseColor("#A0A0A0");
                 break;
             default:
                 displayValue = edibility;
@@ -351,5 +533,4 @@ public class ResultActivity extends AppCompatActivity {
         drawable.setStroke(2, borderColor);
         edibilityContainer.setBackground(drawable);
     }
-
 }

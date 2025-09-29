@@ -1,6 +1,8 @@
 package com.example.myapplication;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -13,6 +15,7 @@ public class MapActivity extends AppCompatActivity {
 
     private double latitude, longitude;
     private MapView mapView;
+    private String postId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +31,7 @@ public class MapActivity extends AppCompatActivity {
         mapView = findViewById(R.id.mapView);
         mapView.setMultiTouchControls(true);
         mapView.getController().setZoom(15.0);
+        postId = getIntent().getStringExtra("postId");
 
         GeoPoint postLocation = new GeoPoint(latitude, longitude);
         mapView.getController().setCenter(postLocation);
@@ -37,6 +41,14 @@ public class MapActivity extends AppCompatActivity {
         marker.setPosition(postLocation);
         marker.setTitle("Post Location");
         mapView.getOverlays().add(marker);
+
+        // 🔹 Report TextView as button
+        TextView btnReportPost = findViewById(R.id.btnReportPost);
+        btnReportPost.setOnClickListener(v -> {
+            Intent intent = new Intent(MapActivity.this, ReportActivity.class);
+            intent.putExtra("postId", postId);
+            startActivity(intent);
+        });
     }
 
     @Override

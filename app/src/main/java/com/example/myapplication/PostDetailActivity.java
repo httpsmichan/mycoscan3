@@ -45,15 +45,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import android.graphics.drawable.GradientDrawable;
 
 public class PostDetailActivity extends AppCompatActivity {
+
 
     private MapView miniMapView;
     private double latitude, longitude;
 
     private RecyclerView rvComments;
     private EditText etComment;
-    private Button btnPostComment;
+    private TextView btnPostComment;
     private List<Comment> commentList;
     private CommentAdapter commentAdapter;
     private FirebaseFirestore db;
@@ -68,6 +70,8 @@ public class PostDetailActivity extends AppCompatActivity {
 
     private String currentUserId;
     private String currentUserVote = null;
+    private TextView commentsCount;
+
 
     private List<String> bannedWords = new ArrayList<>();
 
@@ -172,6 +176,8 @@ public class PostDetailActivity extends AppCompatActivity {
         TextView tvLocation = findViewById(R.id.tvLocation);
         TextView tvTimestamp = findViewById(R.id.tvTimestamp);
         TextView tvVerified = findViewById(R.id.tvVerified);
+        commentsCount = findViewById(R.id.commentsCount);
+
 
         tvDetailType.setText(mushroomType != null ? mushroomType : "Unknown Type");
         tvDetailDesc.setText(description != null ? description : "No description available");
@@ -185,15 +191,53 @@ public class PostDetailActivity extends AppCompatActivity {
         db.collection("posts").document(postId).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        // Category
-                        String category = documentSnapshot.getString("category");
-                        tvCategory.setText("Category: " + (category != null ? category : "Uncategorized"));
+                        // ✅ Description (from Firestore instead of just intent)
+                        String postDescription = documentSnapshot.getString("description");
+                        tvDetailDesc.setText(postDescription != null && !postDescription.isEmpty()
+                                ? postDescription
+                                : "No description available");
 
-                        // Location
+                        // ✅ Category
+                        String category = documentSnapshot.getString("category");
+                        if (category == null || category.isEmpty()) {
+                            category = "Uncategorized";
+                        }
+                        tvCategory.setText(category);
+
+                        // 🔹 Rounded background with color
+                        GradientDrawable bg = new GradientDrawable();
+                        bg.setCornerRadius(5 * getResources().getDisplayMetrics().density); // 5dp radius
+
+                        switch (category.toLowerCase()) {
+                            case "edible":
+                                bg.setColor(getResources().getColor(android.R.color.holo_green_light));
+                                tvCategory.setTextColor(getResources().getColor(android.R.color.white));
+                                break;
+                            case "poisonous":
+                                bg.setColor(getResources().getColor(android.R.color.holo_red_light));
+                                tvCategory.setTextColor(getResources().getColor(android.R.color.white));
+                                break;
+                            case "inedible":
+                                bg.setColor(0xFFFFA500); // Orange
+                                tvCategory.setTextColor(getResources().getColor(android.R.color.white));
+                                break;
+                            case "medicinal":
+                                bg.setColor(getResources().getColor(android.R.color.holo_blue_light));
+                                tvCategory.setTextColor(getResources().getColor(android.R.color.white));
+                                break;
+                            default:
+                                bg.setColor(getResources().getColor(android.R.color.darker_gray));
+                                tvCategory.setTextColor(getResources().getColor(android.R.color.white));
+                                break;
+                        }
+
+                        tvCategory.setBackground(bg);
+
+                        // ✅ Location
                         String location = documentSnapshot.getString("location");
                         tvLocation.setText((location != null ? location : "Unknown"));
 
-                        // Timestamp
+                        // ✅ Timestamp
                         Object rawTimestamp = documentSnapshot.get("timestamp");
                         if (rawTimestamp instanceof com.google.firebase.Timestamp) {
                             long millis = ((com.google.firebase.Timestamp) rawTimestamp).toDate().getTime();
@@ -202,7 +246,6 @@ public class PostDetailActivity extends AppCompatActivity {
                             ).format(new java.util.Date(millis));
                             tvTimestamp.setText(formattedDate);
                         } else if (rawTimestamp instanceof Long) {
-                            // Firestore stored as epoch millis
                             String formattedDate = new java.text.SimpleDateFormat(
                                     "MMM dd, yyyy HH:mm", java.util.Locale.getDefault()
                             ).format(new java.util.Date((Long) rawTimestamp));
@@ -211,14 +254,13 @@ public class PostDetailActivity extends AppCompatActivity {
                             tvTimestamp.setText("Posted on: Unknown");
                         }
 
-                        // Verified status
+                        // ✅ Verified status
                         String verified = documentSnapshot.getString("verified");
                         if (verified == null || verified.isEmpty()) {
                             verified = "Pending review";
                         }
-                        tvVerified.setText(verified);
+                        tvVerified.setText("● " + verified);
 
-                        // Optional color coding
                         if ("Verified".equalsIgnoreCase(verified)) {
                             tvVerified.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
                         } else if ("Rejected".equalsIgnoreCase(verified)) {
@@ -239,12 +281,11 @@ public class PostDetailActivity extends AppCompatActivity {
         setupComments();
         setupMenuOptions();
 
-        // 🔹 --- Voting Logic (same as PostAdapter) ---
+        // 🔹 Voting logic (unchanged)
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null && postId != null) {
             String userId = currentUser.getUid();
 
-            // Listen to this user's vote
             db.collection("posts")
                     .document(postId)
                     .collection("votes")
@@ -265,7 +306,6 @@ public class PostDetailActivity extends AppCompatActivity {
                         }
                     });
 
-            // Handle upvote click
             btnUpvote.setOnClickListener(v -> {
                 db.collection("posts")
                         .document(postId)
@@ -281,7 +321,6 @@ public class PostDetailActivity extends AppCompatActivity {
                         });
             });
 
-            // Handle downvote click
             btnDownvote.setOnClickListener(v -> {
                 db.collection("posts")
                         .document(postId)
@@ -589,6 +628,38 @@ public class PostDetailActivity extends AppCompatActivity {
                         commentAdapter.notifyDataSetChanged();
                     }
                 });
+
+        db.collection("posts")
+                .document(postId)
+                .collection("comments")
+                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .addSnapshotListener((QuerySnapshot snapshot, FirebaseFirestoreException e) -> {
+                    if (e != null) {
+                        Log.e("PostDetailActivity", "Error listening to comments", e);
+                        return;
+                    }
+
+                    commentList.clear();
+                    int commentCount = 0;
+
+                    if (snapshot != null) {
+                        commentCount = snapshot.size(); // 🔹 total comments count
+
+                        for (QueryDocumentSnapshot doc : snapshot) {
+                            try {
+                                Comment comment = doc.toObject(Comment.class);
+                                commentList.add(comment);
+                            } catch (Exception ex) {
+                                Log.e("PostDetailActivity", "Error parsing comment", ex);
+                            }
+                        }
+                        commentAdapter.notifyDataSetChanged();
+                    }
+
+                    // 🔹 Update count text
+                    commentsCount.setText("(" + commentCount + ")");
+                });
+
 
         btnPostComment.setOnClickListener(v -> postComment());
     }
