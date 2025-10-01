@@ -47,7 +47,7 @@ import java.util.HashMap;
 import java.util.Map;
 import android.graphics.drawable.GradientDrawable;
 
-public class PostDetailActivity extends AppCompatActivity {
+public class PostDetailActivity extends BaseActivity {
 
 
     private MapView miniMapView;

@@ -28,12 +28,12 @@
 
         <!-- Notification Bell -->
         <ImageView
-            android:id="@+id/notificationBell"
+            android:id="@+id/mushroomEncy"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:padding="6dp"
-            android:src="@android:drawable/ic_dialog_info"
-            android:contentDescription="Notifications"
+            android:src="@drawable/book"
+            android:contentDescription="Mushroom Encyclopedia"
             android:background="@color/white"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -48,7 +48,7 @@
             android:paddingEnd="8dp"
             android:paddingTop="4dp"
             android:paddingBottom="4dp"
-            app:layout_constraintStart_toEndOf="@id/notificationBell"
+            app:layout_constraintStart_toEndOf="@id/mushroomEncy"
             app:layout_constraintEnd_toStartOf="@id/iconsContainer"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"

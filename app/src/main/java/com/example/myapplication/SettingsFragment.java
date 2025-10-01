@@ -192,15 +192,18 @@ public class SettingsFragment extends Fragment {
                             // Profile photo
                             String photoUrl = documentSnapshot.getString("profilePhoto");
                             if (photoUrl != null && !photoUrl.isEmpty()) {
-                                Glide.with(this)
-                                        .load(photoUrl)
-                                        .placeholder(R.drawable.ic_person_placeholder)
-                                        .error(R.drawable.ic_person_placeholder)
-                                        .circleCrop()
-                                        .into(imageProfile);
+                                if (isAdded() && getContext() != null) {
+                                    Glide.with(requireContext())
+                                            .load(photoUrl)
+                                            .placeholder(R.drawable.ic_person_placeholder)
+                                            .error(R.drawable.ic_person_placeholder)
+                                            .circleCrop()
+                                            .into(imageProfile);
+                                }
                             } else {
                                 imageProfile.setImageResource(R.drawable.ic_person_placeholder);
                             }
+
                         }
                     });
 
@@ -223,12 +226,14 @@ public class SettingsFragment extends Fragment {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
             selectedImageUri = data.getData();
 
-            Glide.with(this)
-                    .load(selectedImageUri)
-                    .placeholder(R.drawable.ic_person_placeholder)
-                    .error(R.drawable.ic_person_placeholder)
-                    .circleCrop()
-                    .into(imageProfile);
+            if (isAdded() && getContext() != null) {
+                Glide.with(requireContext())
+                        .load(selectedImageUri)
+                        .placeholder(R.drawable.ic_person_placeholder)
+                        .error(R.drawable.ic_person_placeholder)
+                        .circleCrop()
+                        .into(imageProfile);
+            }
 
             uploadImageToCloudinary(selectedImageUri);
         }

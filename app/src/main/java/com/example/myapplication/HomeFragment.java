@@ -19,6 +19,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -53,7 +55,7 @@ public class HomeFragment extends Fragment {
     private FirebaseFirestore db;
 
     private ImageView tipImageView, profileIcon;
-    private ImageView properHarvestingImage, identificationTipsImage;
+    private ImageView properHarvestingImage, identificationTipsImage, mushroomEncy;
     private TextView tipTextView;
 
     private CardView cardProperHarvesting, cardIdentificationTips;
@@ -64,6 +66,7 @@ public class HomeFragment extends Fragment {
     private final List<String> mushroomTypesList = new ArrayList<>();
     private final List<UserInfo> usersList = new ArrayList<>(); // Added for user search
     private LinearLayout tipCardsContainer;
+
 
     // Helper class to store user information
     private static class UserInfo {
@@ -91,11 +94,16 @@ public class HomeFragment extends Fragment {
 
     public HomeFragment() {}
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint({"MissingInflatedId", "ClickableViewAccessibility"})
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
+
+        // ✅ If fragment is detached, stop here
+        if (!isAdded()) {
+            return view;
+        }
 
         recyclerPosts = view.findViewById(R.id.recyclerPosts);
         recyclerPosts.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -120,12 +128,17 @@ public class HomeFragment extends Fragment {
         searchSuggestionsRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         searchSuggestionsRecycler.setAdapter(suggestionAdapter);
         tipCardsContainer = view.findViewById(R.id.tipCardsContainer);
+        mushroomEncy = view.findViewById(R.id.mushroomEncy);
+
 
         fabReport = view.findViewById(R.id.fabReport);
         fabReport.setOnClickListener(v -> showReportDialog());
 
         fabReport.setOnTouchListener(new View.OnTouchListener() {
             private float dX, dY;
+            private long touchStart;
+            private static final int CLICK_THRESHOLD = 200; // ms
+            private static final int MOVE_THRESHOLD = 10;   // px
 
             @Override
             public boolean onTouch(View view, MotionEvent event) {
@@ -133,7 +146,8 @@ public class HomeFragment extends Fragment {
                     case MotionEvent.ACTION_DOWN:
                         dX = view.getX() - event.getRawX();
                         dY = view.getY() - event.getRawY();
-                        break;
+                        touchStart = System.currentTimeMillis();
+                        return true;
 
                     case MotionEvent.ACTION_MOVE:
                         view.animate()
@@ -141,38 +155,38 @@ public class HomeFragment extends Fragment {
                                 .y(event.getRawY() + dY)
                                 .setDuration(0)
                                 .start();
-                        break;
+                        return true;
 
-                    default:
-                        return false;
+                    case MotionEvent.ACTION_UP:
+                        long duration = System.currentTimeMillis() - touchStart;
+
+                        // Check if it was a click (short press, minimal movement)
+                        if (duration < CLICK_THRESHOLD &&
+                                Math.abs(event.getRawX() + dX - view.getX()) < MOVE_THRESHOLD &&
+                                Math.abs(event.getRawY() + dY - view.getY()) < MOVE_THRESHOLD) {
+                            view.performClick(); // ✅ will trigger your OnClickListener
+                        }
+                        return true;
                 }
-                return true;
+                return false;
             }
         });
-
 
         // Sample suggestions
         final String[] categories = {"Edible", "Inedible", "Poisonous"};
 
         searchEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String input = s.toString().trim();
 
-                // Hide/show tips when searching
                 tipCardsContainer.setVisibility(input.isEmpty() ? View.VISIBLE : View.GONE);
-
-                // Clear previous suggestions
                 suggestionList.clear();
-                boolean matchedCategory = false;
-                boolean matchedMushroomType = false;
-                boolean matchedUser = false;
+                boolean matchedCategory = false, matchedMushroomType = false, matchedUser = false;
 
                 if (!input.isEmpty()) {
-                    // Search in categories
+                    // Categories
                     for (String cat : categories) {
                         if (cat.toLowerCase().contains(input.toLowerCase())) {
                             suggestionList.add("Category: " + cat);
@@ -180,7 +194,7 @@ public class HomeFragment extends Fragment {
                         if (cat.equalsIgnoreCase(input)) matchedCategory = true;
                     }
 
-                    // Search in mushroom types
+                    // Mushroom types
                     for (String mushroomType : mushroomTypesList) {
                         if (mushroomType.toLowerCase().contains(input.toLowerCase())) {
                             suggestionList.add("Mushroom: " + mushroomType);
@@ -188,7 +202,7 @@ public class HomeFragment extends Fragment {
                         if (mushroomType.equalsIgnoreCase(input)) matchedMushroomType = true;
                     }
 
-                    // Search in users
+                    // Users
                     for (UserInfo user : usersList) {
                         if (user.username.toLowerCase().contains(input.toLowerCase())) {
                             suggestionList.add("User: " + user.username);
@@ -200,9 +214,8 @@ public class HomeFragment extends Fragment {
                 suggestionAdapter.notifyDataSetChanged();
                 searchSuggestionsRecycler.setVisibility(suggestionList.isEmpty() ? View.GONE : View.VISIBLE);
 
-                // Filter logic
                 if (input.isEmpty()) {
-                    loadAllPosts(); // Show all posts if search is empty
+                    loadAllPosts();
                 } else if (matchedCategory) {
                     filterPostsByCategory(input);
                 } else if (matchedMushroomType) {
@@ -211,12 +224,18 @@ public class HomeFragment extends Fragment {
                     filterPostsByUser(input);
                 }
             }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Click listener for suggestions
+        mushroomEncy.setOnClickListener(v -> {
+            DrawerLayout drawerLayout = requireActivity().findViewById(R.id.drawerLayout);
+            if (drawerLayout != null) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
+
+
+        // Suggestion click
         suggestionAdapter.setOnItemClickListener(item -> {
             if (item.startsWith("User: ")) {
                 String username = item.replace("User: ", "").trim();
@@ -226,11 +245,9 @@ public class HomeFragment extends Fragment {
                 searchSuggestionsRecycler.setVisibility(View.GONE);
 
                 if (item.startsWith("Category: ")) {
-                    String category = item.replace("Category: ", "").trim();
-                    filterPostsByCategory(category);
+                    filterPostsByCategory(item.replace("Category: ", "").trim());
                 } else if (item.startsWith("Mushroom: ")) {
-                    String mushroomType = item.replace("Mushroom: ", "").trim();
-                    filterPostsByMushroomType(mushroomType);
+                    filterPostsByMushroomType(item.replace("Mushroom: ", "").trim());
                 } else {
                     loadAllPosts();
                 }
@@ -238,35 +255,39 @@ public class HomeFragment extends Fragment {
         });
 
         // Card click listeners
-        cardProperHarvesting.setOnClickListener(v -> startActivity(new Intent(requireContext(), HarvestingActivity.class)));
-        cardIdentificationTips.setOnClickListener(v -> startActivity(new Intent(requireContext(), IdentificationActivity.class)));
+        cardProperHarvesting.setOnClickListener(v -> {
+            if (isAdded()) startActivity(new Intent(requireContext(), HarvestingActivity.class));
+        });
+        cardIdentificationTips.setOnClickListener(v -> {
+            if (isAdded()) startActivity(new Intent(requireContext(), IdentificationActivity.class));
+        });
 
-        Glide.with(this)
-                .load("https://res.cloudinary.com/diaw4uoea/image/upload/v1758248587/Gemini_Generated_Image_hk15g9hk15g9hk15_p1gppq.png")
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(properHarvestingImage);
+        // ✅ Wrap Glide with safe check
+        if (isAdded()) {
+            Glide.with(this)
+                    .load("https://res.cloudinary.com/diaw4uoea/image/upload/v1758248587/Gemini_Generated_Image_hk15g9hk15g9hk15_p1gppq.png")
+                    .placeholder(R.drawable.ic_launcher_background)
+                    .into(properHarvestingImage);
 
-        Glide.with(this)
-                .load("https://res.cloudinary.com/diaw4uoea/image/upload/v1758248582/Gemini_Generated_Image_uyfrw8uyfrw8uyfr_qbqyeo.png")
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(identificationTipsImage);
+            Glide.with(this)
+                    .load("https://res.cloudinary.com/diaw4uoea/image/upload/v1758248582/Gemini_Generated_Image_uyfrw8uyfrw8uyfr_qbqyeo.png")
+                    .placeholder(R.drawable.ic_launcher_background)
+                    .into(identificationTipsImage);
+        }
 
         db = FirebaseFirestore.getInstance();
         checkUserTerms();
         loadAllPosts();
         loadMushroomTypes();
-        loadUsers(); // Load users for search suggestions
+        loadUsers();
         loadProfilePhoto();
 
-        fabReport = view.findViewById(R.id.fabReport);
-        fabReport.setOnClickListener(v -> showReportDialog());
-
-        // Load categories & show timed tip + image
+        // Show random timed tip
         List<TipCategory> categoriesList = loadCategoriesFromJson();
         if (!categoriesList.isEmpty()) {
             TipCategory chosen = getTimedCategoryTip(categoriesList);
             tipTextView.setText(chosen.tips.get(0));
-            if (!chosen.imageUrl.isEmpty()) {
+            if (isAdded() && !chosen.imageUrl.isEmpty()) {
                 Glide.with(this).load(chosen.imageUrl).into(tipImageView);
             }
         }
@@ -406,7 +427,13 @@ public class HomeFragment extends Fragment {
     }
 
     private List<TipCategory> loadCategoriesFromJson() {
+
         List<TipCategory> categories = new ArrayList<>();
+
+        if (!isAdded()) {
+            return categories;
+        }
+
         try {
             InputStream is = requireContext().getAssets().open("tips.json");
             int size = is.available();
@@ -445,6 +472,8 @@ public class HomeFragment extends Fragment {
         String userId = user.getUid();
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(document -> {
+                    if (!isAdded()) return;
+
                     if (document.exists()) {
                         String photoUrl = document.getString("profilePhoto");
                         if (photoUrl != null && !photoUrl.isEmpty()) {

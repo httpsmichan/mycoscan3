@@ -41,4 +41,10 @@
     <string name="pick_from_gallery" />
 
     <string name="unknown">⚠️ Error: The scanned mushroom species is unknown. No reliable information is available.</string>
+    <string-array name="filter_options">
+        <item>All</item>
+        <item>Verified</item>
+        <item>Declined</item>
+    </string-array>
+
 </resources>

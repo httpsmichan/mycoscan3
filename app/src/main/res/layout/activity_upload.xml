@@ -17,15 +17,6 @@
         android:dividerPadding="12dp"
         android:background="@color/BG">
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="3dp"
-            android:backgroundTint="@android:color/white"
-            app:cardCornerRadius="0dp"
-            app:strokeWidth="1dp"
-            android:elevation="1dp">
-
             <TextView
                 android:id="@+id/postsHeader"
                 android:layout_width="wrap_content"
@@ -35,8 +26,8 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:padding="10dp"
+                android:layout_marginBottom="10dp"
                 android:layout_gravity="center"/>
-        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:id="@+id/mushroomType"
@@ -44,6 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:layout_marginTop="5dp"
+            android:textColor="@color/black"
             android:text="Mushroom Name / Type"
             android:drawableStart="@drawable/ic_l"
             android:gravity="center_vertical"
@@ -64,6 +56,7 @@
                 android:layout_height="wrap_content"
                 android:background="@null"
                 android:padding="12dp"
+                android:textColor="@color/black"
                 android:hint="Scientific or Local Name"
                 android:textSize="12sp"/>
         </androidx.cardview.widget.CardView>
@@ -74,6 +67,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:layout_marginTop="5dp"
+            android:textColor="@color/black"
             android:text="Classification Status"
             android:drawableStart="@drawable/ic_l"
             android:gravity="center_vertical"
@@ -102,6 +96,7 @@
             android:layout_marginBottom="5dp"
             android:layout_marginTop="5dp"
             android:text="Attach Image"
+            android:textColor="@color/black"
             android:drawableStart="@drawable/ic_l"
             android:gravity="center_vertical"
             android:textSize="14sp"/>
@@ -113,6 +108,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Attach Image/Video"
+            android:textColor="@color/black"
             android:background="@drawable/btn_fullmap_bg"
             android:gravity="center"
             android:elevation="2dp"
@@ -138,6 +134,7 @@
             android:layout_marginBottom="5dp"
             android:layout_marginTop="5dp"
             android:text="Fetch Location"
+            android:textColor="@color/black"
             android:drawableStart="@drawable/ic_l"
             android:gravity="center_vertical"
             android:textSize="14sp"/>
@@ -165,6 +162,7 @@
                     android:background="@drawable/btn_fullmap_bg"
                     android:gravity="center"
                     android:elevation="2dp"
+                    android:textColor="@color/black"
                     android:text="Get Current Location"/>
 
                 <org.osmdroid.views.MapView
@@ -248,6 +246,7 @@
             android:layout_marginBottom="5dp"
             android:layout_marginTop="5dp"
             android:text="Description"
+            android:textColor="@color/black"
             android:drawableStart="@drawable/ic_l"
             android:gravity="center_vertical"
             android:textSize="14sp"/>
@@ -269,6 +268,7 @@
                 android:background="@null"
                 android:padding="12dp"
                 android:gravity="top"
+                android:textColor="@color/black"
                 android:inputType="textMultiLine"
                 android:textSize="12sp"/>
         </androidx.cardview.widget.CardView>
@@ -281,6 +281,7 @@
             android:background="@drawable/btn_fullmap_bg"
             android:gravity="center"
             android:elevation="2dp"
+            android:textColor="@color/black"
             android:text="Submit Observation"/>
     </LinearLayout>
 </ScrollView>

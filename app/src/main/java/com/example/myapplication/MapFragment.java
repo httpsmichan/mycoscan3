@@ -193,28 +193,29 @@ public class MapFragment extends Fragment {
     }
 
     private void applyFilters() {
+        if (!isAdded() || mapView == null) return; // fragment not attached, do nothing
+
         mapView.getOverlays().clear();
         mapView.getOverlays().add(davaoPolygon);
 
         for (DocumentSnapshot doc : allPosts) {
             Double lat = doc.getDouble("latitude");
             Double lon = doc.getDouble("longitude");
+            if (lat == null || lon == null || !DavaoGeoFence.isInsideDavao(lat, lon)) continue;
+
             String type = doc.getString("mushroomType");
             String user = doc.getString("username");
             String category = doc.getString("category");
             String imageUrl = doc.getString("imageUrl");
-            String verified = doc.getString("verified");
             String postId = doc.getId();
 
-            if (lat == null || lon == null || !DavaoGeoFence.isInsideDavao(lat, lon)) continue;
-
+            // filters + search checks...
             if (!currentFilter.equals("All")) {
                 if (currentFilter.startsWith("User:")) {
                     String filterUsername = currentFilter.substring(5);
                     if (user == null || !user.equalsIgnoreCase(filterUsername)) continue;
                 } else if (category == null || !category.equals(currentFilter)) continue;
             }
-
             if (!searchQuery.isEmpty()) {
                 boolean matchFound = false;
                 if (type != null && type.toLowerCase().contains(searchQuery)) matchFound = true;
@@ -222,18 +223,13 @@ public class MapFragment extends Fragment {
                 if (!matchFound) continue;
             }
 
-            if (!currentFilter.equals("All")) {
-                if (currentFilter.startsWith("User:")) {
-                    String filterUsername = currentFilter.substring(5);
-                    if (user == null || !user.equalsIgnoreCase(filterUsername)) continue;
-                } else if (category == null || !category.equals(currentFilter)) continue;
-            }
+            // 🔒 Check again before creating marker
+            if (mapView == null) return;
 
             Marker marker = new Marker(mapView);
             marker.setPosition(new GeoPoint(lat, lon));
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
-            marker.setTitle((type != null ? type : "Post") +
-                    (user != null ? "\nby " + user : ""));
+            marker.setTitle((type != null ? type : "Post") + (user != null ? "\nby " + user : ""));
             marker.setRelatedObject(postId);
 
             marker.setOnMarkerClickListener((m, mv) -> {
@@ -241,6 +237,7 @@ public class MapFragment extends Fragment {
                 return true;
             });
 
+            // Glide safe load (with isAdded() check already added earlier)
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 Glide.with(requireContext())
                         .asBitmap()
@@ -250,11 +247,13 @@ public class MapFragment extends Fragment {
                             @Override
                             public void onResourceReady(@NonNull Bitmap resource,
                                                         @Nullable Transition<? super Bitmap> transition) {
+                                if (!isAdded() || mapView == null) return;
                                 int size = 70;
                                 Bitmap smallBitmap = Bitmap.createScaledBitmap(resource, size, size, false);
-                                marker.setIcon(new BitmapDrawable(getResources(), smallBitmap));
+                                marker.setIcon(new BitmapDrawable(requireContext().getResources(), smallBitmap));
                                 mapView.invalidate();
                             }
+
                             @Override
                             public void onLoadCleared(@Nullable Drawable placeholder) {}
                         });

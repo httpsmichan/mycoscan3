@@ -235,6 +235,41 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Extra Description row with icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="1dp">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_l"
+                    android:contentDescription="Description Icon"
+                    android:layout_marginEnd="1dp" />
+
+                <TextView
+                    android:id="@+id/tvDetailDescExtra"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Description:"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvDetailDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Description"
+                android:textSize="12sp"
+                android:layout_marginStart="12dp"
+                android:layout_marginBottom="12dp" />
+
             <!-- MapView -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -292,41 +327,6 @@
                     android:elevation="1dp"/>
 
             </FrameLayout>
-
-            <!-- Extra Description row with icon -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="1dp">
-
-                <ImageView
-                    android:layout_width="30dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/ic_l"
-                    android:contentDescription="Description Icon"
-                    android:layout_marginEnd="1dp" />
-
-                <TextView
-                    android:id="@+id/tvDetailDescExtra"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Description:"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"/>
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvDetailDesc"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Description"
-                android:textSize="12sp"
-                android:layout_marginStart="12dp"
-                android:layout_marginBottom="12dp" />
 
             <!-- Comments label + count in one row -->
             <LinearLayout

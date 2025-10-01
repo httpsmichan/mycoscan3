@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
 
     <org.osmdroid.views.MapView
         android:id="@+id/mapView"
@@ -31,15 +31,26 @@
             android:hint="Search mushrooms or locations..."
             android:imeOptions="actionSearch"
             android:inputType="text"
+            android:textColor="@color/black"
             android:backgroundTint="@color/gray"
             android:padding="10dp"
             android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/filterBy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="  Filter By:"
+            android:textColor="@color/black"
+            android:drawableStart="@drawable/ic_filter"
+            android:gravity="center_vertical"
+            android:textSize="12sp"/>
 
         <!-- Filter Buttons Row -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:scrollbars="none">
 
             <LinearLayout
@@ -53,6 +64,7 @@
                     android:layout_height="36dp"
                     android:layout_marginEnd="8dp"
                     android:text="All"
+                    android:textColor="@color/white"
                     android:textSize="12sp" />
 
                 <Button
@@ -60,6 +72,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:layout_marginEnd="8dp"
+                    android:textColor="@color/white"
                     android:text="Edible"
                     android:textSize="12sp" />
 
@@ -68,6 +81,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:layout_marginEnd="8dp"
+                    android:textColor="@color/white"
                     android:text="Inedible"
                     android:textSize="12sp" />
 
@@ -76,6 +90,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:layout_marginEnd="8dp"
+                    android:textColor="@color/white"
                     android:text="Poisonous"
                     android:textSize="12sp" />
 
@@ -84,6 +99,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:layout_marginEnd="8dp"
+                    android:textColor="@color/white"
                     android:text="Unknown"
                     android:textSize="12sp" />
 
@@ -91,6 +107,7 @@
                     android:id="@+id/filterByUser"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
+                    android:textColor="@color/white"
                     android:text="By User"
                     android:textSize="12sp" />
             </LinearLayout>
