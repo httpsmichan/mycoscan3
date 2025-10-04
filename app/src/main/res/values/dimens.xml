@@ -2,5 +2,6 @@
 <resources>
     <dimen name="grid_spacing">1dp</dimen>
     <dimen name="viewpager_page_margin">16dp</dimen>
-    <dimen name="viewpager_page_offset">32dp</dimen>
+    <dimen name="viewpager_page_offset">16dp</dimen>
+
 </resources>

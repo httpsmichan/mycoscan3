@@ -185,6 +185,25 @@
                 style="?android:attr/borderlessButtonStyle" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/dashboardTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mushroom Discovery Dashboard"
+            android:textSize="14sp"
+            android:layout_marginTop="10dp"
+            android:layout_gravity="center"
+            android:textColor="#1f2937" />
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/dailyContributionChart"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/dialog_background"/>
+
         <LinearLayout
             android:id="@+id/layoutAboutContent"
             android:layout_width="match_parent"
@@ -209,25 +228,10 @@
                 android:elevation="1dp"/>
 
             <TextView
-                android:id="@+id/btnSecurity"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Security (Change Password)"
-                android:textSize="12sp"
-                android:padding="10dp"
-                android:textColor="@android:color/black"
-                android:gravity="center"
-                android:background="@drawable/btn_fullmap_bg"
-                android:layout_gravity="top|start"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="4dp"
-                android:elevation="1dp"/>
-
-            <TextView
                 android:id="@+id/btnJournal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="My Journal (Notes)"
+                android:text="Observations"
                 android:textSize="12sp"
                 android:padding="10dp"
                 android:textColor="@android:color/black"

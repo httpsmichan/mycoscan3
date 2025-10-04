@@ -42,13 +42,6 @@ public class MapActivity extends AppCompatActivity {
         marker.setTitle("Post Location");
         mapView.getOverlays().add(marker);
 
-        // 🔹 Report TextView as button
-        TextView btnReportPost = findViewById(R.id.btnReportPost);
-        btnReportPost.setOnClickListener(v -> {
-            Intent intent = new Intent(MapActivity.this, ReportActivity.class);
-            intent.putExtra("postId", postId);
-            startActivity(intent);
-        });
     }
 
     @Override

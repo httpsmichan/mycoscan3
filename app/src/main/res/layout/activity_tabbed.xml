@@ -58,24 +58,58 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Optional header -->
-            <ImageView
-                android:id="@+id/drawerHeaderImage"
+            <!-- Header container -->
+            <FrameLayout
+                android:id="@+id/drawerHeaderContainer"
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/book" />
+                android:layout_height="180dp"
+                android:background="@color/white">
+
+                <!-- Main header image -->
+                <ImageView
+                    android:id="@+id/drawerHeaderImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#FAF8EC"
+                    android:scaleType="centerCrop"/>
+
+                <!-- Additional image overlay -->
+                <ImageView
+                    android:id="@+id/drawerHeaderOverlay"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
+                    android:layout_gravity="center | left"
+                    android:scaleType="centerCrop"
+                    android:layout_margin="8dp"
+                    android:clipToOutline="true"
+                    android:elevation="4dp"
+                    android:background="@drawable/circle_background"
+                    android:src="@drawable/mycoscan_logo"/>
+
+                <TextView
+                    android:id="@+id/headerTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MycoScan: Identify &amp; Learn Mushrooms"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="bottom | left"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:textColor="@color/black"/>
+            </FrameLayout>
 
             <TextView
-                android:id="@+id/headerTitle"
+                android:id="@+id/dvo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Davao Mushrooms"
-                android:textSize="16sp"
-                android:layout_gravity="center"
-                android:textStyle="bold"
-                android:layout_margin="5dp"
-                android:layout_marginTop="8dp"/>
+                android:textSize="13sp"
+                android:layout_gravity="start | left"
+                android:layout_marginTop="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginBottom="3dp"
+                android:textColor="@color/black"/>
 
             <!-- List of mushrooms -->
             <androidx.recyclerview.widget.RecyclerView

@@ -33,13 +33,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class SettingsFragment extends Fragment {
 
     private static final int PICK_IMAGE_REQUEST = 1001;
 
     private TextView textUsername, textUserHandle, textUserBio, textFollowers, textFollowing, textPosts;
-    private TextView btnEditProfile, btnSecurity, btnJournal, btnLogout, btnVerify;
+    private TextView btnEditProfile, btnJournal, btnLogout, btnVerify;
     private Button btnAboutTab, btnPostsTab;
     private LinearLayout layoutAboutContent, layoutPostsContent;
 
@@ -50,6 +53,7 @@ public class SettingsFragment extends Fragment {
 
     private FirebaseFirestore db;
     private Uri selectedImageUri;
+    private com.github.mikephil.charting.charts.LineChart dailyContributionChart;
 
 
     @Nullable
@@ -75,7 +79,6 @@ public class SettingsFragment extends Fragment {
 
         // Action buttons
         btnEditProfile = view.findViewById(R.id.btnEditProfile);
-        btnSecurity = view.findViewById(R.id.btnSecurity);
         btnJournal = view.findViewById(R.id.btnJournal);
         btnVerify = view.findViewById(R.id.btnVerify);
         btnLogout = view.findViewById(R.id.btnLogout);
@@ -87,16 +90,16 @@ public class SettingsFragment extends Fragment {
         postList = new ArrayList<>();
         postAdapter = new UserPostAdapter(getContext(), postList);
         recyclerUserPosts.setAdapter(postAdapter);
-
+        dailyContributionChart = view.findViewById(R.id.dailyContributionChart);
 
         db = FirebaseFirestore.getInstance();
 
+        setupDailyContributionChart();
         loadUserInfoAndPosts();
 
         // Click listeners
         imageProfile.setOnClickListener(v -> openImagePicker());
         btnEditProfile.setOnClickListener(v -> startActivity(new Intent(getActivity(), EditProfileActivity.class)));
-        btnSecurity.setOnClickListener(v -> startActivity(new Intent(getActivity(), SecurityActivity.class)));
         btnJournal.setOnClickListener(v -> startActivity(new Intent(getActivity(), JournalActivity.class)));
 
         // ✅ Updated: redirect to Verification.java
@@ -218,6 +221,213 @@ public class SettingsFragment extends Fragment {
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent, "Select Profile Image"), PICK_IMAGE_REQUEST);
+    }
+
+    private void setupDailyContributionChart() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        // Fetch posts data
+        db.collection("posts")
+                .whereEqualTo("userId", user.getUid())
+                .get()
+                .addOnSuccessListener(postsSnapshot -> {
+                    Map<String, Integer> postsPerDay = new TreeMap<>();
+
+                    // Collect posts per day
+                    for (QueryDocumentSnapshot doc : postsSnapshot) {
+                        Long timestamp = doc.getLong("timestamp");
+                        if (timestamp == null) continue;
+
+                        String date = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                .format(new java.util.Date(timestamp));
+                        postsPerDay.put(date, postsPerDay.getOrDefault(date, 0) + 1);
+                    }
+
+                    // Now fetch scans data
+                    db.collection("users")
+                            .document(user.getUid())
+                            .collection("scanned")
+                            .get()
+                            .addOnSuccessListener(scansSnapshot -> {
+                                Map<String, Integer> scansPerDay = new TreeMap<>();
+
+                                // Collect scans per day
+                                for (QueryDocumentSnapshot doc : scansSnapshot) {
+                                    com.google.firebase.Timestamp timestamp = doc.getTimestamp("timestamp");
+                                    if (timestamp == null) continue;
+
+                                    String date = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                            .format(timestamp.toDate());
+                                    scansPerDay.put(date, scansPerDay.getOrDefault(date, 0) + 1);
+                                }
+
+                                // Combine all dates from both datasets
+                                Set<String> allDates = new TreeSet<>();
+                                allDates.addAll(postsPerDay.keySet());
+                                allDates.addAll(scansPerDay.keySet());
+
+                                // Prepare data for posts
+                                List<com.github.mikephil.charting.data.Entry> postsEntries = new ArrayList<>();
+                                List<com.github.mikephil.charting.data.Entry> scansEntries = new ArrayList<>();
+                                List<String> xLabels = new ArrayList<>();
+                                int index = 0;
+
+                                // Add starting point at zero for both
+                                postsEntries.add(new com.github.mikephil.charting.data.Entry(index, 0));
+                                scansEntries.add(new com.github.mikephil.charting.data.Entry(index, 0));
+                                xLabels.add("");
+                                index++;
+
+                                // Add data for each date
+                                for (String date : allDates) {
+                                    int postCount = postsPerDay.getOrDefault(date, 0);
+                                    int scanCount = scansPerDay.getOrDefault(date, 0);
+
+                                    postsEntries.add(new com.github.mikephil.charting.data.Entry(index, postCount));
+                                    scansEntries.add(new com.github.mikephil.charting.data.Entry(index, scanCount));
+                                    xLabels.add(date);
+                                    index++;
+                                }
+
+                                // Create dataset for posts
+                                com.github.mikephil.charting.data.LineDataSet postsDataSet =
+                                        new com.github.mikephil.charting.data.LineDataSet(postsEntries, "Daily Posts");
+                                postsDataSet.setColor(android.graphics.Color.parseColor("#4287f5"));
+                                postsDataSet.setCircleColor(android.graphics.Color.parseColor("#4287f5"));
+                                postsDataSet.setCircleRadius(3f);
+                                postsDataSet.setLineWidth(2f);
+                                postsDataSet.setDrawFilled(true);
+                                postsDataSet.setFillColor(android.graphics.Color.parseColor("#FFE0DE"));
+                                postsDataSet.setValueTextSize(8f);
+                                postsDataSet.setDrawValues(false);
+                                postsDataSet.setValueTextColor(android.graphics.Color.DKGRAY);
+                                postsDataSet.setMode(com.github.mikephil.charting.data.LineDataSet.Mode.CUBIC_BEZIER);
+
+                                // Create dataset for mushroom scans
+                                com.github.mikephil.charting.data.LineDataSet scansDataSet =
+                                        new com.github.mikephil.charting.data.LineDataSet(scansEntries, "Mushroom Scans");
+                                scansDataSet.setColor(android.graphics.Color.parseColor("#54d166"));
+                                scansDataSet.setCircleColor(android.graphics.Color.parseColor("#54d166"));
+                                scansDataSet.setCircleRadius(3f);
+                                scansDataSet.setLineWidth(2f);
+                                scansDataSet.setDrawFilled(true);
+                                scansDataSet.setFillColor(android.graphics.Color.parseColor("#C8E6C9"));
+                                scansDataSet.setValueTextSize(8f);
+                                scansDataSet.setDrawValues(false);
+                                scansDataSet.setValueTextColor(android.graphics.Color.DKGRAY);
+                                scansDataSet.setMode(com.github.mikephil.charting.data.LineDataSet.Mode.CUBIC_BEZIER);
+
+                                // Combine both datasets
+                                com.github.mikephil.charting.data.LineData lineData =
+                                        new com.github.mikephil.charting.data.LineData(postsDataSet, scansDataSet);
+                                dailyContributionChart.setData(lineData);
+
+                                // X-axis configuration
+                                com.github.mikephil.charting.components.XAxis xAxis = dailyContributionChart.getXAxis();
+                                xAxis.setGranularity(1f);
+                                xAxis.setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
+                                xAxis.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
+                                    @Override
+                                    public String getFormattedValue(float value) {
+                                        int i = Math.round(value);
+                                        if (i >= 0 && i < xLabels.size()) return xLabels.get(i);
+                                        return "";
+                                    }
+                                });
+                                xAxis.setTextColor(android.graphics.Color.DKGRAY);
+                                xAxis.setDrawGridLines(false);
+
+                                // Y-axis: whole numbers only
+                                com.github.mikephil.charting.components.YAxis leftAxis = dailyContributionChart.getAxisLeft();
+                                leftAxis.setGranularity(1f);
+                                leftAxis.setGranularityEnabled(true);
+                                leftAxis.setTextColor(android.graphics.Color.DKGRAY);
+                                leftAxis.setAxisMinimum(0f);
+                                leftAxis.setDrawGridLines(true);
+
+                                dailyContributionChart.getAxisRight().setEnabled(false);
+
+                                // Legend configuration
+                                com.github.mikephil.charting.components.Legend legend = dailyContributionChart.getLegend();
+                                legend.setTextColor(android.graphics.Color.DKGRAY);
+                                legend.setEnabled(true);
+                                legend.setVerticalAlignment(com.github.mikephil.charting.components.Legend.LegendVerticalAlignment.TOP);
+                                legend.setHorizontalAlignment(com.github.mikephil.charting.components.Legend.LegendHorizontalAlignment.CENTER);
+                                legend.setOrientation(com.github.mikephil.charting.components.Legend.LegendOrientation.HORIZONTAL);
+                                legend.setDrawInside(false);
+
+                                dailyContributionChart.getDescription().setEnabled(false);
+                                dailyContributionChart.animateX(1000);
+                                dailyContributionChart.invalidate();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("SettingsFragment", "Failed to load scans for chart", e);
+                                // If scans fail, still show posts data
+                                displayPostsOnly(postsPerDay);
+                            });
+                })
+                .addOnFailureListener(e -> Log.e("SettingsFragment", "Failed to load posts for chart", e));
+    }
+
+    // Fallback method to display only posts if scans fail to load
+    private void displayPostsOnly(Map<String, Integer> postsPerDay) {
+        List<com.github.mikephil.charting.data.Entry> entries = new ArrayList<>();
+        List<String> xLabels = new ArrayList<>();
+        int index = 0;
+
+        entries.add(new com.github.mikephil.charting.data.Entry(index, 0));
+        xLabels.add("");
+        index++;
+
+        for (Map.Entry<String, Integer> entry : postsPerDay.entrySet()) {
+            entries.add(new com.github.mikephil.charting.data.Entry(index, entry.getValue()));
+            xLabels.add(entry.getKey());
+            index++;
+        }
+
+        com.github.mikephil.charting.data.LineDataSet dataSet =
+                new com.github.mikephil.charting.data.LineDataSet(entries, "Daily Posts");
+        dataSet.setColor(android.graphics.Color.parseColor("#c74138"));
+        dataSet.setCircleColor(android.graphics.Color.parseColor("#54d166"));
+        dataSet.setCircleRadius(3f);
+        dataSet.setLineWidth(1f);
+        dataSet.setDrawFilled(true);
+        dataSet.setFillColor(android.graphics.Color.parseColor("#C8E6C9"));
+        dataSet.setValueTextSize(8f);
+        dataSet.setDrawValues(false);
+        dataSet.setValueTextColor(android.graphics.Color.DKGRAY);
+        dataSet.setMode(com.github.mikephil.charting.data.LineDataSet.Mode.CUBIC_BEZIER);
+
+        com.github.mikephil.charting.data.LineData lineData = new com.github.mikephil.charting.data.LineData(dataSet);
+        dailyContributionChart.setData(lineData);
+
+        com.github.mikephil.charting.components.XAxis xAxis = dailyContributionChart.getXAxis();
+        xAxis.setGranularity(1f);
+        xAxis.setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
+        xAxis.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                int i = Math.round(value);
+                if (i >= 0 && i < xLabels.size()) return xLabels.get(i);
+                return "";
+            }
+        });
+        xAxis.setTextColor(android.graphics.Color.DKGRAY);
+        xAxis.setDrawGridLines(false);
+
+        com.github.mikephil.charting.components.YAxis leftAxis = dailyContributionChart.getAxisLeft();
+        leftAxis.setGranularity(1f);
+        leftAxis.setGranularityEnabled(true);
+        leftAxis.setTextColor(android.graphics.Color.DKGRAY);
+        leftAxis.setAxisMinimum(0f);
+        leftAxis.setDrawGridLines(true);
+
+        dailyContributionChart.getAxisRight().setEnabled(false);
+        dailyContributionChart.getLegend().setTextColor(android.graphics.Color.DKGRAY);
+        dailyContributionChart.getDescription().setEnabled(false);
+        dailyContributionChart.animateX(1000);
+        dailyContributionChart.invalidate();
     }
 
     @Override

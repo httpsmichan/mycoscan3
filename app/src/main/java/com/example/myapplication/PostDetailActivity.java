@@ -1,7 +1,9 @@
 package com.example.myapplication;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -18,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -131,6 +134,7 @@ public class PostDetailActivity extends BaseActivity {
         void onUsernameFetched(String username);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -140,9 +144,107 @@ public class PostDetailActivity extends BaseActivity {
         db = FirebaseFirestore.getInstance();
         currentUserId = FirebaseAuth.getInstance().getUid();
 
+        ImageButton  fab = findViewById(R.id.fab);
+
+        fab.setOnTouchListener(new View.OnTouchListener() {
+            private float dX, dY;
+            private int lastAction;
+            private int screenWidth, screenHeight;
+
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                if (screenWidth == 0 || screenHeight == 0) {
+                    screenWidth = ((View) view.getParent()).getWidth();
+                    screenHeight = ((View) view.getParent()).getHeight();
+                }
+
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        dX = view.getX() - event.getRawX();
+                        dY = view.getY() - event.getRawY();
+                        lastAction = MotionEvent.ACTION_DOWN;
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        float newX = event.getRawX() + dX;
+                        float newY = event.getRawY() + dY;
+
+                        // Prevent dragging off screen vertically
+                        newY = Math.max(0, Math.min(newY, screenHeight - view.getHeight()));
+
+                        view.setX(newX);
+                        view.setY(newY);
+                        lastAction = MotionEvent.ACTION_MOVE;
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                        if (lastAction == MotionEvent.ACTION_DOWN) {
+                            fab.setOnTouchListener(new View.OnTouchListener() {
+                                private float dX, dY;
+                                private int lastAction;
+                                private int screenWidth, screenHeight;
+
+                                @Override
+                                public boolean onTouch(View view, MotionEvent event) {
+                                    if (screenWidth == 0 || screenHeight == 0) {
+                                        screenWidth = ((View) view.getParent()).getWidth();
+                                        screenHeight = ((View) view.getParent()).getHeight();
+                                    }
+
+                                    switch (event.getActionMasked()) {
+                                        case MotionEvent.ACTION_DOWN:
+                                            dX = view.getX() - event.getRawX();
+                                            dY = view.getY() - event.getRawY();
+                                            lastAction = MotionEvent.ACTION_DOWN;
+                                            return true;
+
+                                        case MotionEvent.ACTION_MOVE:
+                                            float newX = event.getRawX() + dX;
+                                            float newY = event.getRawY() + dY;
+                                            newY = Math.max(0, Math.min(newY, screenHeight - view.getHeight()));
+                                            view.setX(newX);
+                                            view.setY(newY);
+                                            lastAction = MotionEvent.ACTION_MOVE;
+                                            return true;
+
+                                        case MotionEvent.ACTION_UP:
+                                            if (lastAction == MotionEvent.ACTION_DOWN) {
+                                                // Show bottom sheet
+                                                showNoteBottomSheet();
+                                            } else {
+                                                float middle = screenWidth / 2f;
+                                                float targetX = (view.getX() < middle) ? 0 : screenWidth - view.getWidth();
+                                                view.animate().x(targetX).setDuration(200).start();
+                                            }
+                                            return true;
+
+                                        default:
+                                            return false;
+                                    }
+                                }
+                            });
+
+                        } else {
+                            // Snap to nearest horizontal edge
+                            float middle = screenWidth / 2f;
+                            float targetX = (view.getX() < middle) ? 0 : screenWidth - view.getWidth();
+
+                            view.animate()
+                                    .x(targetX)
+                                    .setDuration(200)
+                                    .start();
+                        }
+                        return true;
+
+                    default:
+                        return false;
+                }
+            }
+        });
+
         Intent intent = getIntent();
         if (intent == null) {
-            Toast.makeText(this, "Error loading post details", Toast.LENGTH_SHORT).show();
+            showCustomToast("Error loading post details");
             finish();
             return;
         }
@@ -157,7 +259,7 @@ public class PostDetailActivity extends BaseActivity {
         longitude = intent.getDoubleExtra("longitude", 0.0);
 
         if (postId == null || postId.isEmpty()) {
-            Toast.makeText(this, "Post ID missing", Toast.LENGTH_LONG).show();
+            showCustomToast("Post ID missing");
             finish();
             return;
         }
@@ -177,7 +279,6 @@ public class PostDetailActivity extends BaseActivity {
         TextView tvTimestamp = findViewById(R.id.tvTimestamp);
         TextView tvVerified = findViewById(R.id.tvVerified);
         commentsCount = findViewById(R.id.commentsCount);
-
 
         tvDetailType.setText(mushroomType != null ? mushroomType : "Unknown Type");
         tvDetailDesc.setText(description != null ? description : "No description available");
@@ -272,8 +373,10 @@ public class PostDetailActivity extends BaseActivity {
                 })
                 .addOnFailureListener(e -> {
                     Log.e("PostDetailActivity", "Error fetching post details", e);
-                    Toast.makeText(this, "Failed to load post details", Toast.LENGTH_SHORT).show();
+                    showCustomToast("Failed to load post details");
                 });
+
+
 
         loadBannedWords();
         loadVotes();
@@ -350,6 +453,55 @@ public class PostDetailActivity extends BaseActivity {
         }
     }
 
+    private void showNoteBottomSheet() {
+        View sheetView = getLayoutInflater().inflate(R.layout.bottomsheet_note, null);
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheetDialog =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        bottomSheetDialog.setContentView(sheetView);
+
+        EditText etTitle = sheetView.findViewById(R.id.etDialogTitleInput);
+        EditText etNote = sheetView.findViewById(R.id.etDialogNote);
+        Button btnSave = sheetView.findViewById(R.id.btnSave);
+
+        btnSave.setOnClickListener(v -> {
+            String title = etTitle.getText().toString().trim();
+            String text = etNote.getText().toString().trim();
+
+            if (title.isEmpty() || text.isEmpty()) {
+                showCustomToast("Title and note cannot be empty");
+                return;
+            }
+
+            saveNoteToFirebase(title, text);
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.show();
+    }
+
+    private void saveNoteToFirebase(String title, String text) {
+        if (currentUserId == null) return;
+
+        Map<String, Object> noteData = new HashMap<>();
+        noteData.put("title", title);
+        noteData.put("text", text);
+        noteData.put("date", com.google.firebase.Timestamp.now());
+
+        db.collection("users")
+                .document(currentUserId)
+                .collection("notes")
+                .add(noteData)
+                .addOnSuccessListener(docRef -> {
+                    showCustomToast("Note saved!");
+                    Log.d("PostDetailActivity", "Note saved with ID: " + docRef.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("PostDetailActivity", "Failed to save note", e);
+                    showCustomToast("Failed to save note");
+                });
+
+    }
+
     private void setupMenuOptions() {
         ivMenuOptions.setOnClickListener(v -> {
             PopupMenu popup = new PopupMenu(this, ivMenuOptions);
@@ -380,6 +532,20 @@ public class PostDetailActivity extends BaseActivity {
         });
     }
 
+    private void showCustomToast(String message) {
+        LayoutInflater inflater = getLayoutInflater();
+        View layout = inflater.inflate(R.layout.custom_toast, findViewById(R.id.toast_root)); // root layout ID in custom_toast.xml
+
+        TextView toastText = layout.findViewById(R.id.toast_text);
+        toastText.setText(message);
+
+        Toast toast = new Toast(getApplicationContext());
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.setView(layout);
+        toast.show();
+    }
+
+
     private boolean isPostOwnedByCurrentUser() {
         // If we have the author ID, compare it with current user ID
         if (postAuthorId != null && currentUserId != null) {
@@ -402,21 +568,21 @@ public class PostDetailActivity extends BaseActivity {
 
     private void deletePost() {
         if (postId == null || currentUserId == null) {
-            Toast.makeText(this, "Unable to delete post", Toast.LENGTH_SHORT).show();
+            showCustomToast("Unable to delete post");
             return;
         }
 
-        // Delete the post document
         db.collection("posts").document(postId)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Post deleted successfully", Toast.LENGTH_SHORT).show();
-                    finish(); // Close this activity and return to previous screen
+                    showCustomToast("Post deleted successfully");
+                    finish();
                 })
                 .addOnFailureListener(e -> {
                     Log.e("PostDetailActivity", "Error deleting post", e);
-                    Toast.makeText(this, "Failed to delete post", Toast.LENGTH_SHORT).show();
+                    showCustomToast("Failed to delete post");
                 });
+
     }
 
     private void showReportDialog() {
@@ -440,7 +606,7 @@ public class PostDetailActivity extends BaseActivity {
 
     private void submitReport(String reason) {
         if (currentUserId == null) {
-            Toast.makeText(this, "Login required to report", Toast.LENGTH_SHORT).show();
+            showCustomToast("Login required to report");
             return;
         }
 
@@ -454,12 +620,13 @@ public class PostDetailActivity extends BaseActivity {
         db.collection("reports")
                 .add(reportData)
                 .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
+                    showCustomToast("Report submitted successfully");
                 })
                 .addOnFailureListener(e -> {
                     Log.e("PostDetailActivity", "Error submitting report", e);
-                    Toast.makeText(this, "Failed to submit report", Toast.LENGTH_SHORT).show();
+                    showCustomToast("Failed to submit report");
                 });
+
     }
 
     private String censorIfNeeded(String input) {
@@ -512,7 +679,7 @@ public class PostDetailActivity extends BaseActivity {
 
     private void updateVote(String voteType) {
         if (currentUserId == null) {
-            Toast.makeText(this, "Login required to vote", Toast.LENGTH_SHORT).show();
+            showCustomToast("Login required to vote");
             return;
         }
 
@@ -525,7 +692,7 @@ public class PostDetailActivity extends BaseActivity {
                         updateVoteUI(null);
                     })
                     .addOnFailureListener(e ->
-                            Toast.makeText(this, "Failed to remove vote", Toast.LENGTH_SHORT).show()
+                            showCustomToast("Failed to remove vote")
                     );
         } else {
             Map<String, Object> voteData = new HashMap<>();
@@ -540,7 +707,8 @@ public class PostDetailActivity extends BaseActivity {
                         updateVoteUI(voteType);
                     })
                     .addOnFailureListener(e ->
-                            Toast.makeText(this, "Failed to vote", Toast.LENGTH_SHORT).show()
+                            showCustomToast("Failed to vote")
+
                     );
         }
     }
@@ -667,7 +835,7 @@ public class PostDetailActivity extends BaseActivity {
     private void postComment() {
         String rawText = etComment.getText().toString().trim();
         if (rawText.isEmpty()) {
-            Toast.makeText(this, "Please enter a comment", Toast.LENGTH_SHORT).show();
+            showCustomToast("Please enter a comment");
             return;
         }
 
@@ -692,7 +860,7 @@ public class PostDetailActivity extends BaseActivity {
                     })
                     .addOnFailureListener(e -> {
                         Log.e("PostDetailActivity", "Error posting comment", e);
-                        Toast.makeText(PostDetailActivity.this, "Failed to post comment", Toast.LENGTH_SHORT).show();
+                        showCustomToast("Failed to post comment");
                         btnPostComment.setEnabled(true);
                     });
         });

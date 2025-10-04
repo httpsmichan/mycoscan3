@@ -1,11 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@color/BG"
-    android:scrollbars="none"
-    android:padding="10dp">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageButton
+        android:id="@+id/fab"
+        android:layout_width="40dp"
+        android:layout_height="30dp"
+        android:layout_gravity="right | center"
+        android:background="@drawable/rect_button_bg"
+        android:src="@drawable/ic_edit"
+        android:scaleType="center"
+        android:padding="0dp"
+        android:elevation="1dp"/>
+
+    <!-- Scrollable content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/BG"
+        android:scrollbars="none"
+        android:padding="10dp">
+
 
     <!-- 👇 Single container -->
     <LinearLayout
@@ -39,7 +56,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
+            
             <!-- Header with Username, Verified, and Menu -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -405,5 +422,9 @@
                 android:scrollbars="vertical" />
 
         </LinearLayout>
+
     </LinearLayout>
+
 </ScrollView>
+
+</FrameLayout>

@@ -8,6 +8,7 @@ import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,6 +23,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
@@ -57,7 +59,8 @@ public class UploadFragment extends Fragment {
 
     private EditText etMushroomType, etDescription;
     private Spinner spinnerCategory;
-    private TextView btnPickImage, btnGetLocation, btnSubmit;
+    private TextView btnPickImage, btnGetLocation;
+    private AppCompatButton btnSubmit;
     private Uri imageUri;
     private String userLocation = "Unknown";
 
@@ -83,7 +86,7 @@ public class UploadFragment extends Fragment {
                     if (imageUri != null) {
                         imagePreview.setImageURI(imageUri);
                         imagePreview.setVisibility(View.VISIBLE);
-                        Toast.makeText(requireContext(), "Image selected!", Toast.LENGTH_SHORT).show();
+                        showCustomToast("Image selected!");
                     }
                 }
             });
@@ -113,7 +116,6 @@ public class UploadFragment extends Fragment {
         Configuration.getInstance().setUserAgentValue(requireContext().getPackageName());
         miniMapView.setTileSource(TileSourceFactory.MAPNIK);
         miniMapView.setMultiTouchControls(false);
-
 
         loadBannedWords();
 
@@ -149,7 +151,7 @@ public class UploadFragment extends Fragment {
             final String finalDescription = description;
 
             if (!DavaoGeoFence.isInsideDavao(latitude, longitude)) {
-                Toast.makeText(requireContext(), "You're outside Davao City. Posting is only allowed inside Davao City.", Toast.LENGTH_LONG).show();
+                showCustomToast("You're outside Davao City. Posting is only allowed inside Davao City.");
                 return;
             }
 
@@ -164,11 +166,12 @@ public class UploadFragment extends Fragment {
                             .collection("logs")
                             .add(log)
                             .addOnSuccessListener(doc ->
-                                    Toast.makeText(requireContext(), "Inappropriate words detected. Logged for review.", Toast.LENGTH_LONG).show()
+                                    showCustomToast("Inappropriate words detected. Logged for review.")
                             )
                             .addOnFailureListener(e ->
-                                    Toast.makeText(requireContext(), "Failed to log banned word use.", Toast.LENGTH_SHORT).show()
+                                    showCustomToast("Failed to log banned word use.")
                             );
+
                 });
                 return;
             }
@@ -178,7 +181,7 @@ public class UploadFragment extends Fragment {
                     .callback(new UploadCallback() {
                         @Override
                         public void onStart(String requestId) {
-                            Toast.makeText(requireContext(), "Uploading image...", Toast.LENGTH_SHORT).show();
+                            showCustomToast("Uploading image...");
                         }
 
                         @Override
@@ -223,7 +226,7 @@ public class UploadFragment extends Fragment {
                                             String postId = documentReference.getId();
                                             documentReference.update("postId", postId);
 
-                                            Toast.makeText(requireContext(), "Post saved!", Toast.LENGTH_SHORT).show();
+                                            showCustomToast("Post saved!");
 
                                             etMushroomType.setText("");
                                             etDescription.setText("");
@@ -241,7 +244,8 @@ public class UploadFragment extends Fragment {
                                             mapPreview.getOverlays().clear();
                                         })
                                         .addOnFailureListener(e ->
-                                                Toast.makeText(requireContext(), "Error saving post: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                                                showCustomToast("Error saving post: " + e.getMessage())
+
                                         );
 
                             });
@@ -249,7 +253,7 @@ public class UploadFragment extends Fragment {
 
                         @Override
                         public void onError(String requestId, ErrorInfo error) {
-                            Toast.makeText(requireContext(), "Upload failed: " + error.getDescription(), Toast.LENGTH_SHORT).show();
+                            showCustomToast("Upload failed: " + error.getDescription());
                         }
 
                         @Override
@@ -310,6 +314,19 @@ public class UploadFragment extends Fragment {
         return root;
     }
 
+    private void showCustomToast(String message) {
+        LayoutInflater inflater = getLayoutInflater();
+        View layout = inflater.inflate(R.layout.custom_toast, getView().findViewById(R.id.toast_root)); // root layout ID in custom_toast.xml
+
+        TextView toastText = layout.findViewById(R.id.toast_text);
+        toastText.setText(message);
+
+        Toast toast = new Toast(requireContext());
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.setView(layout);
+        toast.show();
+    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -317,37 +334,55 @@ public class UploadFragment extends Fragment {
         if (requestCode == REQUEST_LOCATION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             getUserLocation();
         } else {
-            Toast.makeText(requireContext(), "Location permission is required.", Toast.LENGTH_SHORT).show();
+            showCustomToast("Location permission is required.");
         }
     }
 
     private void getUserLocation() {
+
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.e("UploadFragment", "Location permissions not granted!");
+            showCustomToast("Location permission is required.");
             return;
         }
 
-        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-            if (location != null) {
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-                userLocation = latitude + ", " + longitude;
+        com.google.android.gms.location.LocationRequest locationRequest =
+                com.google.android.gms.location.LocationRequest.create()
+                        .setPriority(com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY)
+                        .setInterval(0)
+                        .setFastestInterval(0)
+                        .setNumUpdates(1);
 
-                tvLatitude.setText("Y: " + latitude);
-                tvLongitude.setText("X: " + longitude);
+        fusedLocationClient.requestLocationUpdates(locationRequest,
+                new com.google.android.gms.location.LocationCallback() {
+                    @Override
+                    public void onLocationResult(com.google.android.gms.location.LocationResult locationResult) {
+                        if (locationResult == null) {
+                            Log.e("UploadFragment", "Fresh location request returned null.");
+                            showCustomToast("Unable to fetch location.");
+                            return;
+                        }
 
-                // 🔹 Show mini map container (instead of using mapPreview directly)
-                geoContainer.setVisibility(View.VISIBLE);
-                coordinates.setVisibility(View.VISIBLE);
+                        android.location.Location location = locationResult.getLastLocation();
+                        latitude = location.getLatitude();
+                        longitude = location.getLongitude();
+                        userLocation = latitude + ", " + longitude;
 
-                // 🔹 Setup mini map with marker + click logic
-                setupMiniMap();
+                        Log.d("UploadFragment", "Fresh location fetched: " + userLocation);
 
-                Toast.makeText(requireContext(), "Location captured!", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(requireContext(), "Unable to fetch location", Toast.LENGTH_SHORT).show();
-            }
-        });
+                        tvLatitude.setText("Y: " + latitude);
+                        tvLongitude.setText("X: " + longitude);
+
+                        geoContainer.setVisibility(View.VISIBLE);
+                        coordinates.setVisibility(View.VISIBLE);
+
+                        setupMiniMap();
+
+                        showCustomToast("Location captured!");
+                    }
+                },
+                null);
     }
 
     private String getCurrentUserId() {
@@ -476,7 +511,7 @@ public class UploadFragment extends Fragment {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(requireContext(), "Failed to load banned words", Toast.LENGTH_SHORT).show();
+            showCustomToast("Failed to load banned words");
         }
     }
 }

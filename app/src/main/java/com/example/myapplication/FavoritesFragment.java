@@ -35,13 +35,19 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FieldValue;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import android.widget.ImageButton;
@@ -74,8 +80,7 @@ public class FavoritesFragment extends Fragment {
     private boolean isFlashOn = false;
     private static final int REQUEST_CODE_PICK_IMAGE = 20;
 
-
-
+    private FirebaseFirestore db;
 
     public FavoritesFragment() { }
 
@@ -90,12 +95,11 @@ public class FavoritesFragment extends Fragment {
         btnFlash = view.findViewById(R.id.btnFlash);
         btnToggleCamera = view.findViewById(R.id.btnToggleCamera);
 
-
-        tfliteHelper = new TFLiteHelper(getContext()); // initialize TFLite
+        tfliteHelper = new TFLiteHelper(getContext());
+        db = FirebaseFirestore.getInstance();
 
         ImageButton btnPickGallery = view.findViewById(R.id.btnPickGallery);
 
-// Load last image from MediaStore
         Uri lastImageUri = getLastImageUri();
         if (lastImageUri != null) {
             try {
@@ -106,15 +110,12 @@ public class FavoritesFragment extends Fragment {
             }
         }
 
-// Open gallery when clicked
         btnPickGallery.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             intent.setType("image/*");
             startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE);
         });
 
-
-        // Check permissions
         if (allPermissionsGranted()) {
             startCamera();
         } else {
@@ -129,19 +130,17 @@ public class FavoritesFragment extends Fragment {
         TextView scanningTipsText = view.findViewById(R.id.scanningTipsText);
         LinearLayout scanningTipsHeader = view.findViewById(R.id.scanningTipsHeader);
 
-// Set default transparent background
         scanningTipsContainer.getBackground().setAlpha(0);
 
         scanningTipsHeader.setOnClickListener(v -> {
             if (scanningTipsText.getVisibility() == View.GONE) {
                 scanningTipsText.setVisibility(View.VISIBLE);
-                scanningTipsContainer.getBackground().setAlpha(178); // 70% opacity
+                scanningTipsContainer.getBackground().setAlpha(178);
             } else {
                 scanningTipsText.setVisibility(View.GONE);
-                scanningTipsContainer.getBackground().setAlpha(0); // fully transparent
+                scanningTipsContainer.getBackground().setAlpha(0);
             }
         });
-
 
         return view;
     }
@@ -166,7 +165,6 @@ public class FavoritesFragment extends Fragment {
                 .setFlashMode(ImageCapture.FLASH_MODE_AUTO)
                 .build();
 
-
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
         try {
@@ -186,6 +184,9 @@ public class FavoritesFragment extends Fragment {
                 try {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), imageUri);
                     ClassificationResult result = tfliteHelper.classify(bitmap);
+
+                    // Log scan to Firestore
+                    logScanToFirestore(result.label, result.confidence);
 
                     Intent intent = new Intent(getContext(), ResultActivity.class);
                     intent.putExtra("photoUri", imageUri.toString());
@@ -216,7 +217,7 @@ public class FavoritesFragment extends Fragment {
                 newMode = ImageCapture.FLASH_MODE_AUTO;
                 btnFlash.setImageResource(R.drawable.ic_flash_auto);
                 break;
-            default: // AUTO
+            default:
                 newMode = ImageCapture.FLASH_MODE_OFF;
                 btnFlash.setImageResource(R.drawable.ic_flash_off);
                 break;
@@ -224,7 +225,6 @@ public class FavoritesFragment extends Fragment {
 
         imageCapture.setFlashMode(newMode);
     }
-
 
     private void toggleCamera() {
         cameraSelector = (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
@@ -269,19 +269,73 @@ public class FavoritesFragment extends Fragment {
                             Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), savedUri);
                             ClassificationResult result = tfliteHelper.classify(bitmap);
 
+                            // Log scan to Firestore
+                            logScanToFirestore(result.label, result.confidence);
+
                             Intent intent = new Intent(getContext(), ResultActivity.class);
                             intent.putExtra("photoUri", savedUri.toString());
-                            intent.putExtra("prediction", result.label);      // send label
-                            intent.putExtra("confidence", result.confidence); // send confidence
+                            intent.putExtra("prediction", result.label);
+                            intent.putExtra("confidence", result.confidence);
                             startActivity(intent);
-
-
 
                         } catch (IOException e) {
                             e.printStackTrace();
                             Toast.makeText(getContext(), "Failed to load photo", Toast.LENGTH_SHORT).show();
                         }
                     }
+                });
+    }
+
+    /**
+     * Logs a mushroom scan to Firestore
+     * Creates a document in the "scanned" subcollection with timestamp and predicted label
+     * Also increments the total scan counter
+     */
+    private void logScanToFirestore(String predictedLabel, float confidence) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user == null) {
+            Log.w(TAG, "User not logged in, cannot log scan to Firestore");
+            return;
+        }
+
+        String userId = user.getUid();
+
+        // Create scan data
+        Map<String, Object> scanData = new HashMap<>();
+        scanData.put("timestamp", FieldValue.serverTimestamp());
+        scanData.put("predictedLabel", predictedLabel);
+        scanData.put("confidence", confidence);
+
+        // Add to scanned subcollection
+        db.collection("users")
+                .document(userId)
+                .collection("scanned")
+                .add(scanData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d(TAG, "Scan logged successfully with ID: " + documentReference.getId());
+
+                    // Increment the scan counter in the user document
+                    db.collection("users")
+                            .document(userId)
+                            .update("scanned", FieldValue.increment(1))
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "Scan counter incremented successfully");
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Error incrementing scan counter", e);
+                                // If field doesn't exist, create it
+                                Map<String, Object> counterData = new HashMap<>();
+                                counterData.put("scanned", 1);
+                                db.collection("users").document(userId)
+                                        .set(counterData, com.google.firebase.firestore.SetOptions.merge())
+                                        .addOnSuccessListener(aVoid2 -> Log.d(TAG, "Scan counter initialized"))
+                                        .addOnFailureListener(e2 -> Log.e(TAG, "Error initializing scan counter", e2));
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error logging scan to Firestore", e);
+                    Toast.makeText(getContext(), "Failed to log scan", Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -298,7 +352,6 @@ public class FavoritesFragment extends Fragment {
             intent.putExtra("prediction", result.label);
             intent.putExtra("confidence", result.confidence);
             startActivity(intent);
-
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -357,6 +410,4 @@ public class FavoritesFragment extends Fragment {
         }
         return null;
     }
-
-
 }

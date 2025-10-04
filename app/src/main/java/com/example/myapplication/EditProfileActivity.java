@@ -37,10 +37,10 @@ public class EditProfileActivity extends AppCompatActivity {
     private FirebaseUser currentUser;
     private String userId;
 
-    private EditText etUsername, etFullName, etBio, etLocation;
-    private TextView tvAchievements;
+    private EditText etUsername, etFullName, etBio, etLocation, etMobile ;
+    private TextView btnChangePhoto, btnAddWebsite, btnPassword;
     private ImageView ivProfileImage;
-    private AppCompatButton btnChangePhoto, btnAddWebsite, btnSaveAll;
+    private AppCompatButton btnSaveAll;
     private LinearLayout llWebsitesContainer;
 
     private String oldProfileUrl;
@@ -53,6 +53,9 @@ public class EditProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_profile);
 
+        TextView tvBack = findViewById(R.id.tvBack);
+        tvBack.setOnClickListener(v -> finish());
+
         db = FirebaseFirestore.getInstance();
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) finish();
@@ -62,12 +65,47 @@ public class EditProfileActivity extends AppCompatActivity {
         etFullName = findViewById(R.id.etFullName);
         etBio = findViewById(R.id.etBio);
         etLocation = findViewById(R.id.etLocation);
-        tvAchievements = findViewById(R.id.tvAchievements);
         ivProfileImage = findViewById(R.id.ivProfileImage);
         btnChangePhoto = findViewById(R.id.btnChangePhoto);
         llWebsitesContainer = findViewById(R.id.llWebsitesContainer);
         btnAddWebsite = findViewById(R.id.btnAddWebsite);
         btnSaveAll = findViewById(R.id.btnSaveAll);
+        btnPassword = findViewById(R.id.btnPassword);
+        etMobile = findViewById(R.id.etMobile);
+        setupEditOnTouch(etMobile);
+
+        // Default to +63 if empty
+        etMobile.setText("+63");
+
+// Prevent deleting +63
+        etMobile.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && etMobile.getText().toString().isEmpty()) {
+                etMobile.setText("+63");
+                etMobile.setSelection(etMobile.getText().length());
+            }
+        });
+
+        etMobile.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                String text = s.toString();
+                if (!text.startsWith("+63")) {
+                    etMobile.setText("+63");
+                    etMobile.setSelection(etMobile.getText().length());
+                }
+            }
+        });
+
+        btnPassword.setOnClickListener(v -> {
+            Intent intent = new Intent(EditProfileActivity.this, SecurityActivity.class);
+            startActivity(intent);
+        });
 
         loadUserData();
 
@@ -96,11 +134,13 @@ public class EditProfileActivity extends AppCompatActivity {
             etFullName.setText(document.getString("fullName"));
             etBio.setText(document.getString("bio"));
             etLocation.setText(document.getString("location"));
+            etMobile.setText(document.getString("mobile"));
 
             originalData.put("username", etUsername.getText().toString());
             originalData.put("fullName", etFullName.getText().toString());
             originalData.put("bio", etBio.getText().toString());
             originalData.put("location", etLocation.getText().toString());
+            originalData.put("mobile", etMobile.getText().toString());
 
             List<String> socials = (List<String>) document.get("socials");
             if (socials != null && !socials.isEmpty()) {
@@ -111,12 +151,14 @@ public class EditProfileActivity extends AppCompatActivity {
                 originalSocials = new ArrayList<>();
             }
 
-            List<String> achievements = (List<String>) document.get("achievements");
-            if (achievements != null && !achievements.isEmpty()) {
-                tvAchievements.setText("• " + String.join("\n• ", achievements));
+            String mobile = document.getString("mobile");
+            if (mobile != null && !mobile.isEmpty()) {
+                etMobile.setText(mobile);
             } else {
-                tvAchievements.setText("No achievements achieved yet.");
+                etMobile.setText("+63");
             }
+            originalData.put("mobile", etMobile.getText().toString());
+
         });
     }
 
@@ -163,6 +205,7 @@ public class EditProfileActivity extends AppCompatActivity {
         checkAndPutUpdate("fullName", etFullName.getText().toString(), updates);
         checkAndPutUpdate("bio", etBio.getText().toString(), updates);
         checkAndPutUpdate("location", etLocation.getText().toString(), updates);
+        checkAndPutUpdate("mobile", etMobile.getText().toString(), updates);
 
         List<String> socialsList = new ArrayList<>();
         for (int i = 0; i < llWebsitesContainer.getChildCount(); i++) {
@@ -232,7 +275,6 @@ public class EditProfileActivity extends AppCompatActivity {
                                     Glide.with(EditProfileActivity.this).load(newUrl).circleCrop().into(ivProfileImage);
                                     Toast.makeText(EditProfileActivity.this, "Profile photo updated!", Toast.LENGTH_SHORT).show();
 
-                                    // Save new URL; deletion of old image should be handled server-side
                                     oldProfileUrl = newUrl;
                                 });
                     }

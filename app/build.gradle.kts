@@ -90,6 +90,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.glide.okhttp3)
+
+    implementation(libs.mpandroidchart)
+
 }
 
 configurations.all {
